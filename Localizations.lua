@@ -9,9 +9,10 @@ ns.L = setmetatable(L,{__index=function(t,k)
 end});
 
 -- Do you want to help localize this addon?
+-- https://www.curseforge.com/wow/addons/lfr-of-the-past/localization
 
 --@do-not-package@
-L[addon] = "LFR [of the past]"
+L["LFR_of_the_past"] = "LFR [of the past]"
 L["AddOnLoaded"] = "AddOn loaded..."
 L["AddOnLoadedDesc"] = "Display 'AddOn loaded...' message on login"
 L["MinimapIcon"] = "Minimap icon"
