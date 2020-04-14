@@ -1,0 +1,22 @@
+## Interface: 80300
+## Title: LFR [of the past]
+## Notes: Track encounter status of past lfr accessable by npc's like lore seeker han
+## Author: Hizuro
+## Version: @project-version@
+## SavedVariables: LFRotp_Options, LFRotp_Dev
+## OptionalDeps: LibStub, CallbackHandler-1.0, LibColors-1.0, LibDataBroker-1.1, LibDBIcon-1.0, LibQTip-1.0, Ace3
+
+#@no-lib-strip@
+libs\LibStub\LibStub.lua
+libs\CallbackHandler-1.0\CallbackHandler-1.0.lua
+libs\LibColors-1.0\LibColors-1.0.xml
+libs\LibDataBroker-1.1\LibDataBroker-1.1.lua
+libs\LibDBIcon-1.0\LibDBIcon-1.0.lua
+libs\AceDB-3.0\AceDB-3.0.lua
+libs\AceGUI-3.0\AceGUI-3.0.xml
+libs\AceConfig-3.0\AceConfig-3.0.xml
+#@end-no-lib-strip@
+
+Localizations.lua
+data.lua
+LFR_of_the_past.lua
