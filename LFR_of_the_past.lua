@@ -10,7 +10,7 @@ local LDB = LibStub("LibDataBroker-1.1");
 local LDBIcon = LibStub("LibDBIcon-1.0", true);
 
 local realm,character,faction = GetRealmName();
-local buttons,hookedButton,died,NPC_ID = {},{},{},false,(UnitGUID("target"));
+local buttons,hookedButton,died,NPC_ID,db = {},{},{},false,(UnitGUID("target"));
 local name, typeID, subtypeID, minLevel, maxLevel, recLevel, minRecLevel, maxRecLevel, expansionLevel, groupID, texture = 1,2,3,4,5,6,7,8,9,10,11; -- GetLFGDungeonInfo
 local difficulty, maxPlayers, description, isHoliday, bonusRepAmount, minPlayers, isTimeWalker, name2, minGearLevel = 12,13,14,15,16,17,18,19,20; -- GetLFGDungeonInfo
 local iconTexCoords,killedEncounter,BossKillQueryUpdate,UpdateInstanceInfoLock,currentInstance = {},{},false,false,{};
@@ -344,9 +344,9 @@ GossipFrame:HookScript("OnEvent",function(self,event)
 end);
 
 ----------------------------------------------------
--- QueueStatusFrame (tooltip like frame on mouseover QueueStatusMinimapButton)
+-- create into tooltip for raids
 
-QueueStatusFrame:HookScript("OnShow",function(parent)
+local function CreateEncounterTooltip(parent)
 	if --[[IsInstance() or]] IsInRaid() then
 		local instanceName, instanceType, difficultyID, difficultyName, maxPlayers, dynamicDifficulty, isDynamic, instanceMapID, instanceGroupSize = GetInstanceInfo()
 		if not (difficultyID==7 or difficultyID==17) then return end
@@ -378,6 +378,13 @@ QueueStatusFrame:HookScript("OnShow",function(parent)
 			GameTooltip:Show();
 		end
 	end
+end
+
+-- QueueStatusFrame hook to add tooltip to the QueueStatusFrame tooltip
+QueueStatusFrame:HookScript("OnShow",function(parent)
+	if db.profile.queueStatusFrameETT then
+		CreateEncounterTooltip(parent);
+	end
 end);
 
 QueueStatusFrame:HookScript("OnHide",function(parent)
@@ -387,10 +394,12 @@ end);
 ----------------------------------------------------
 -- addon option panel
 
-local dbDefaults,db,options = {
+local dbDefaults,options = {
 	profile = {
 		AddOnLoaded = true,
 		minimap = {hide=false},
+		minimapButtonETT = false,
+		queueStatusFrameETT = true,
 	}
 };
 
@@ -408,8 +417,22 @@ local function RegisterOptions()
 				type = "toggle", order = 2,
 				name = L["MinimapIcon"], desc = L["MinimapIconDesc"]
 			},
+			encounterTooltips = {
+				type = "group", order = 3, inline = true,
+				name = L["EncounterTooltip"],
+				args = {
+					minimapButtonETT = {
+						type = "toggle", order = 3,
+						name = L["MinimapETT"], desc = L["MinimapETTDesc"],
+					},
+					queueStatusFrameETT = {
+						type = "toggle", order = 4,
+						name = L["InstanceEyeETT"], desc = L["InstanceEyeETTDesc"],
+					},
+				}
+			},
 			neutral = {
-				type = "description", order = 3, fontSize = "large",
+				type = "description", order = 5, fontSize = "large",
 				name = L["PlayerNeutral"],
 			}
 			-- npcs added by function updateOptions
@@ -530,6 +553,10 @@ local function RegisterDataBroker()
 			end
 			tt:AddLine(" ");
 			tt:AddLine(C("copper",L["Click"]).." || "..C("green",L["Open LFR [of the past] info panel"]));
+
+			if db.profile.minimapButtonETT then
+				CreateEncounterTooltip(tt);
+			end
 		end,
 		--OnEnter = LDBObject_OnEnter,
 		--OnLeave = LDBObject_OnLeave,

@@ -23,6 +23,10 @@ L["PlayerNeutral"] = "You are faction neutral. This addon required a choosen fac
 L["Coordinates"] = "Coordinates"
 L["Click"] = "Click"
 L["Open LFR [of the past] info panel"] = "Open LFR [of the past] info panel"
+L["MinimapETT"] = "Minimap button"
+L["MinimapETTDesc"] = "Adds encounter tooltip to the addon own minimap button tooltip. Without a data broker panel addon like Titan Panel, you should enable \"Minimap icon\" to display the encounter tooltip."
+L["InstanceEyeETT"] = "Instance eye"
+L["InstanceEyeETTDesc"] = "Adds encounter tooltip to blizzards standard ui instance eye on minimap"
 --@end-do-not-package@
 
 --@localization(locale="enUS", format="lua_additive_table", handle-subnamespaces="none", handle-unlocalized="ignore")@
