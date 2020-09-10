@@ -22,8 +22,12 @@ function ns.npcs_update()
 			or {94870,590,41.5,47.0,5,"LFR",imgs={"wod1_"..faction,"wod2_"..faction,"wod3_"..faction}},
 		-- legion
 		{111246,627,63.6,55.6,6,"LFR",imgs={"legion1","legion2","legion3"}},
-		-- bfa
-		-- {00000,0000,0,0,7,"LFR"}, -- coming soon // 8.1 ?
+		-- bfa // coming soon // 9.1 ?
+		--[[
+		faction=="alliance"
+			and {144383,1161,74.10,14.16,7,"LFR"}
+			or {144384,1165,56.63,88.58,7,"LFR"},
+		]]
 	};
 
 	wipe(ns.npcID);

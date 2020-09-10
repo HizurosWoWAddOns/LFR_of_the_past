@@ -14,7 +14,7 @@ local buttons,hookedButton,died,NPC_ID,db = {},{},{},false,(UnitGUID("target"));
 local name, typeID, subtypeID, minLevel, maxLevel, recLevel, minRecLevel, maxRecLevel, expansionLevel, groupID, texture = 1,2,3,4,5,6,7,8,9,10,11; -- GetLFGDungeonInfo
 local difficulty, maxPlayers, description, isHoliday, bonusRepAmount, minPlayers, isTimeWalker, name2, minGearLevel = 12,13,14,15,16,17,18,19,20; -- GetLFGDungeonInfo
 local iconTexCoords,killedEncounter,BossKillQueryUpdate,UpdateInstanceInfoLock,currentInstance = {},{},false,false,{};
-local imgSize,imgPath = 168,"Interface\\AddOns\\LFR_of_the_past\\media\\";
+local imgSize,imgPath,isImmersionFrameHookOnHide = 168,"Interface\\AddOns\\LFR_of_the_past\\media\\";
 local pat = {
 	RAID_INSTANCE_WELCOME = _G.RAID_INSTANCE_WELCOME_LOCKED:gsub("%%s","(.*)"),
 	RAID_INSTANCE_WELCOME_LOCKED = _G.RAID_INSTANCE_WELCOME_LOCKED:gsub("%%s","(.*)")
@@ -186,11 +186,14 @@ local InstanceGroups = setmetatable({},{
 
 local function buttonHook_OnEnter(self)
 	if not NPC_ID then return end
-
 	local buttonID = self:GetID();
 	if buttonID and buttons[buttonID] then
 		GameTooltip:SetOwner(self,"ANCHOR_NONE");
-		GameTooltip:SetPoint("LEFT",GossipFrame,"RIGHT");
+		if self:GetName():find("ImmersionTitleButton%d") then
+			GameTooltip:SetPoint("RIGHT",self,"LEFT",-4,0)
+		else
+			GameTooltip:SetPoint("LEFT",GossipFrame,"RIGHT");
+		end
 
 		-- instance name
 		GameTooltip:AddLine(buttons[buttonID].instance[name]);
@@ -240,48 +243,34 @@ local function buttonHook_OnLeave()
 	GameTooltip:Hide();
 end
 
-local function raidButton(button,icon,data)
-	icon:SetTexture("interface\\minimap\\raid");
-	iconTexCoords[icon] = {icon:GetTexCoord()};
-	icon:SetTexCoord(0.20,0.80,0.20,0.80);
-	local label = data.instance[name].."\n|Tinterface\\lfgframe\\ui-lfg-icon-heroic:12:12:0:0:32:32:0:16:0:16|t "..C("dkred",_G.GENERIC_FRACTION_STRING:format(data.numEncounters[1],data.numEncounters[2]));
-	if data.instance[name]~=data.instance[name2] then
-		label = label .. " || ".. C("dkgray",data.instance[name2]);
+local function OnGossipShow(frame)
+	wipe(buttons); wipe(iconTexCoords);
+	local id,_ = UnitGUID("npc");
+	if id then
+		_,_,_,_,_,id = strsplit('-',id);
+		id = tonumber(id);
 	end
-	button:SetText(label);
-end
-
-local function szenarioButton(button,icon,data)
-	icon:SetTexture("interface\\minimap\\dungeon");
-	iconTexCoords[icon] = {icon:GetTexCoord()};
-	icon:SetTexCoord(0.20,0.80,0.20,0.80);
-	local label = {data.instance[name]};
-	if data.instance[difficulty]==1 then
-		tinsert(label,C("dkblue"," ("..PLAYER_DIFFICULTY2..")"));
-	end
-	button:SetText(table.concat(label,"\n"));
-end
-
-GossipFrame:HookScript("OnHide",function()
-	for icon, texCoord in pairs(iconTexCoords)do
-		icon:SetTexCoord(unpack(texCoord));
-	end
-end);
-
-GossipFrame:HookScript("OnEvent",function(self,event)
-	if event=="GOSSIP_SHOW" then
-		wipe(buttons); wipe(iconTexCoords);
-		local id,_ = UnitGUID("npc");
-		if id then
-			_,_,_,_,_,id = strsplit('-',id);
-			id = tonumber(id);
-		end
-		if id and ns.npcID[id] and not IsControlKeyDown() then
-			ScanSavedInstances();
-			NPC_ID = id;
+	if id and ns.npcID[id] and not IsControlKeyDown() then
+		ScanSavedInstances();
+		NPC_ID = id;
+		local Buttons,isImmersion = {},false;
+		if frame==GossipFrame then
 			local index,button,icon = 1,_G["GossipTitleButton1"],_G["GossipTitleButton1GossipIcon"];
-			while button and button:IsShown() do
-				local buttonID,text = button:GetID(),button:GetText();
+			while button do
+				tinsert(Buttons,button);
+				index = index + 1;
+				button = _G["GossipTitleButton"..index];
+				if button then
+					icon = _G["GossipTitleButton"..index.."GossipIcon"];
+				end
+			end
+		elseif frame==ImmersionFrame then
+			Buttons = ImmersionFrame.TitleButtons.Buttons;
+			isImmersion = true;
+		end
+		for i,button in ipairs(Buttons)do
+			if button:IsShown() then
+				local buttonID,text = button:GetID()--,button:GetText();
 				local instanceID
 				if ns.gossip2instance[NPC_ID] and #ns.gossip2instance[NPC_ID]>0 then
 					instanceID = ns.gossip2instance[NPC_ID][buttonID];
@@ -318,29 +307,60 @@ GossipFrame:HookScript("OnEvent",function(self,event)
 							tinsert(data.encounters,boss);
 						end
 					end
-					-- get encounter status
-					if data.instance[typeID]==1 and data.instance[subtypeID]==4 then
-						szenarioButton(button,icon,data);
-					else
-						raidButton(button,icon,data);
+					if isImmersion then
+						-- gossip text replacement
+						local label = data.instance[name];
+						if data.instance[name]~=data.instance[name2] then
+							label = label .. "\n" .. C("ltgray",data.instance[name2]);
+						end
+						label = label .. "\n|Tinterface\\lfgframe\\ui-lfg-icon-heroic:12:12:0:0:32:32:0:16:0:16|t "..C("ltred",_G.GENERIC_FRACTION_STRING:format(data.numEncounters[1],data.numEncounters[2]));
+						button:SetText(label);
+						-- gossip icon replacement
+						iconTexCoords[button.Icon] = {button.Icon:GetTexCoord()};
+						button.Icon:SetTexture("interface\\minimap\\raid");
+						button.Icon:SetTexCoord(0.20,0.80,0.20,0.80);
+					else -- GossipFrame
+						-- gossip text replacement
+						local label = data.instance[name].."\n|Tinterface\\lfgframe\\ui-lfg-icon-heroic:12:12:0:0:32:32:0:16:0:16|t "..C("dkred",_G.GENERIC_FRACTION_STRING:format(data.numEncounters[1],data.numEncounters[2]));
+						if data.instance[name]~=data.instance[name2] then
+							label = label .. " || ".. C("dkgray",data.instance[name2]);
+						end
+						button:SetText(label);
+						-- gossip icon replacement
+						local icon = _G[button:GetName().."GossipIcon"];
+						icon:SetTexture("interface\\minimap\\raid");
+						iconTexCoords[icon] = {icon:GetTexCoord()};
+						icon:SetTexCoord(0.20,0.80,0.20,0.80);
+						GossipResize(button);
+					end
+					if not hookedButton["button"..buttonID] then
+						button:HookScript("OnEnter",buttonHook_OnEnter);
+						button:HookScript("OnLeave",buttonHook_OnLeave);
+						hookedButton["button"..buttonID] = true;
 					end
 					buttons[buttonID] = data;
-					GossipResize(button);
-				end
-
-				if not hookedButton["button"..index] then
-					button:HookScript("OnEnter",buttonHook_OnEnter);
-					button:HookScript("OnLeave",buttonHook_OnLeave);
-					hookedButton["button"..index] = true;
-				end
-				index = index + 1;
-				button = _G["GossipTitleButton"..index];
-				if button then
-					icon = _G["GossipTitleButton"..index.."GossipIcon"];
 				end
 			end
 		end
 	end
+end
+
+GossipFrame:HookScript("OnEvent",function(self,event)
+	if event=="GOSSIP_SHOW" then
+		OnGossipShow(self)
+	end
+end);
+
+local function OnGossipHide()
+	for icon, texCoord in pairs(iconTexCoords)do
+		icon:SetTexCoord(unpack(texCoord));
+		iconTexCoords[icon]=nil;
+	end
+	ns.debug("OnGossipHide")
+end
+
+GossipFrame:HookScript("OnHide",function()
+	OnGossipHide(self)
 end);
 
 ----------------------------------------------------
@@ -571,24 +591,32 @@ end
 ----------------------------------------------------
 -- event frame
 
-local frame = CreateFrame("frame");
+local immersionHook,frame = false,CreateFrame("frame");
 
 frame:SetScript("OnEvent",function(self,event,...)
-	if event=="ADDON_LOADED" and addon==... then
-		self:UnregisterEvent("ADDON_LOADED");
+	if event=="ADDON_LOADED" then
+		if addon==... then
+			--self:UnregisterEvent("ADDON_LOADED");
 
-		character = (UnitName("player")).."-"..realm;
+			character = (UnitName("player")).."-"..realm;
 
-		if LFRotp_Options==nil then
-			LFRotp_Options = {};
-		end
+			if LFRotp_Options==nil then
+				LFRotp_Options = {};
+			end
 
-		RegisterOptions();
+			RegisterOptions();
 
-		RegisterDataBroker();
+			RegisterDataBroker();
 
-		if db.profile.AddOnLoaded then
-			ns.print(L["AddOnLoaded"]);
+			if db.profile.AddOnLoaded then
+				ns.print(L["AddOnLoaded"]);
+			end
+		elseif (...=="Immersion" or ImmersionFrame) and not immersionHook then
+			immersionHook = true;
+			hooksecurefunc(ImmersionFrame,"GOSSIP_SHOW",function()
+				OnGossipShow(ImmersionFrame)
+			end);
+			ImmersionFrame:HookScript("OnHide",OnGossipHide);
 		end
 	elseif not ns.faction(true) and (event=="PLAYER_LOGIN" or event=="NEUTRAL_FACTION_SELECT_RESULT") then
 		RequestRaidInfo();
