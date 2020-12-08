@@ -98,7 +98,7 @@ function ns.scanTT:GetStringRegions(dataFunction,...)
 	local regions,strs = {ns.scanTT:GetRegions()},{};
 	for i=1,#regions do
 		if (regions[i]~=nil) and (regions[i]:GetObjectType()=="FontString") then
-			str = (regions[i]:GetText() or ""):trim();
+			local str = (regions[i]:GetText() or ""):trim();
 			if str~="" then
 				tinsert(strs,str);
 			end
