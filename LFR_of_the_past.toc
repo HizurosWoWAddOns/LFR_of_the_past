@@ -6,6 +6,8 @@
 ## SavedVariables: LFRotp_Options, LFRotp_Dev
 ## OptionalDeps: LibStub, CallbackHandler-1.0, LibColors-1.0, LibDataBroker-1.1, LibDBIcon-1.0, LibQTip-1.0, Ace3
 
+## X-Curse-Project-ID: 375750
+
 #@no-lib-strip@
 libs\LibStub\LibStub.lua
 libs\CallbackHandler-1.0\CallbackHandler-1.0.lua
