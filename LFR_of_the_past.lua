@@ -255,18 +255,8 @@ local function OnGossipShow()
 		if ImmersionFrame then
 			Buttons = ImmersionFrame.TitleButtons.Buttons;
 			isImmersion = true;
-		elseif GossipFrame.buttons then -- GossipFrame // since SL prepatch
+		elseif GossipFrame.buttons then
 			Buttons = GossipFrame.buttons;
-		elseif _G["GossipTitleButton1"] then -- GossipFrame // before SL prepatch
-			local index,button,icon = 1,_G["GossipTitleButton1"],_G["GossipTitleButton1GossipIcon"];
-			while button do
-				tinsert(Buttons,button);
-				index = index + 1;
-				button = _G["GossipTitleButton"..index];
-				if button then
-					icon = _G["GossipTitleButton"..index.."GossipIcon"];
-				end
-			end
 		end
 		for i,button in ipairs(Buttons)do
 			if button:IsShown() then
@@ -324,24 +314,13 @@ local function OnGossipShow()
 						if data.instance[name]~=data.instance[name2] then
 							label = label .. " || ".. C("dkgray",data.instance[name2]);
 						end
-						if GossipFrame.buttons then -- GossipFrame // since SL prepatch
-							-- gossip text replacement
-							button:SetText(label);
-							-- gossip icon replacement
-							iconTexCoords[button.Icon] = {button.Icon:GetTexCoord()};
-							button.Icon:SetTexture("interface\\minimap\\raid");
-							button.Icon:SetTexCoord(0.20,0.80,0.20,0.80);
-							button:Resize();
-						elseif _G["GossipTitleButton1"] then -- GossipFrame // before SL prepatch
-							-- gossip text replacement
-							button:SetText(label);
-							-- gossip icon replacement
-							local icon = _G[button:GetName().."GossipIcon"];
-							iconTexCoords[icon] = {icon:GetTexCoord()};
-							icon:SetTexture("interface\\minimap\\raid");
-							icon:SetTexCoord(0.20,0.80,0.20,0.80);
-							GossipResize(button);
-						end
+						-- gossip text replacement
+						button:SetText(label);
+						-- gossip icon replacement
+						iconTexCoords[button.Icon] = {button.Icon:GetTexCoord()};
+						button.Icon:SetTexture("interface\\minimap\\raid");
+						button.Icon:SetTexCoord(0.20,0.80,0.20,0.80);
+						button:Resize();
 					end
 					if not hookedButton["button"..buttonID] then
 						button:HookScript("OnEnter",buttonHook_OnEnter);
@@ -365,9 +344,7 @@ local function OnGossipHide()
 	ns.debug("OnGossipHide")
 end
 
-GossipFrame:HookScript("OnHide",function()
-	OnGossipHide(self)
-end);
+GossipFrame:HookScript("OnHide",OnGossipHide);
 
 ----------------------------------------------------
 -- create into tooltip for raids
