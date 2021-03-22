@@ -195,8 +195,13 @@ local function buttonHook_OnEnter(self)
 			GameTooltip:SetPoint("LEFT",GossipFrame,"RIGHT");
 		end
 
+		local showID = "";
+		if false then
+			showID = " " .. C("ltblue","("..buttons[buttonID].instanceID..")");
+		end
+
 		-- instance name
-		GameTooltip:AddLine(buttons[buttonID].instance[name]);
+		GameTooltip:AddLine(buttons[buttonID].instance[name].. showID);
 
 		-- instance group name (for raids splitted into multible lfr instances)
 		if not ns.noSubtitle[NPC_ID] and buttons[buttonID].instance[name]~=buttons[buttonID].instance[name2] then
@@ -281,7 +286,7 @@ local function OnGossipShow()
 						bossIndexes = ns.instance2bosses[instanceID];
 						data.numEncounters[2] = #ns.instance2bosses[instanceID];
 					else
-						data.numEncounters[2] = GetLFGDungeonNumEncounters(instanceID)
+						data.numEncounters[2] = GetLFGDungeonNumEncounters(instanceID);
 						for i=1, data.numEncounters[2] do
 							tinsert(bossIndexes,i);
 						end
@@ -297,25 +302,27 @@ local function OnGossipShow()
 							tinsert(data.encounters,boss);
 						end
 					end
+					local showID = "";
+					if false then
+						showID = " " .. C("blue","("..instanceID..")");
+					end
 					if isImmersion then
 						-- gossip text replacement
-						local label = data.instance[name];
-						if data.instance[name]~=data.instance[name2] then
-							label = label .. "\n" .. C("ltgray",data.instance[name2]);
-						end
-						label = label .. "\n|Tinterface\\lfgframe\\ui-lfg-icon-heroic:12:12:0:0:32:32:0:16:0:16|t "..C("ltred",_G.GENERIC_FRACTION_STRING:format(data.numEncounters[1],data.numEncounters[2]));
-						button:SetText(label);
+						button:SetText(
+							data.instance[name] ..showID.."\n"..
+							C("ltgray",data.instance[name2]) .."\n"..
+							"|Tinterface\\lfgframe\\ui-lfg-icon-heroic:12:12:0:0:32:32:0:16:0:16|t "..C("ltred",_G.GENERIC_FRACTION_STRING:format(data.numEncounters[1],data.numEncounters[2]))
+						);
 						-- gossip icon replacement
 						iconTexCoords[button.Icon] = {button.Icon:GetTexCoord()};
 						button.Icon:SetTexture("interface\\minimap\\raid");
 						button.Icon:SetTexCoord(0.20,0.80,0.20,0.80);
 					else -- GossipFrame
-						local label = data.instance[name].."\n|Tinterface\\lfgframe\\ui-lfg-icon-heroic:12:12:0:0:32:32:0:16:0:16|t "..C("dkred",_G.GENERIC_FRACTION_STRING:format(data.numEncounters[1],data.numEncounters[2]));
-						if data.instance[name]~=data.instance[name2] then
-							label = label .. " || ".. C("dkgray",data.instance[name2]);
-						end
 						-- gossip text replacement
-						button:SetText(label);
+						button:SetText(
+							data.instance[name]..showID.."\n"..
+							"|Tinterface\\lfgframe\\ui-lfg-icon-heroic:12:12:0:0:32:32:0:16:0:16|t "..C("dkred",_G.GENERIC_FRACTION_STRING:format(data.numEncounters[1],data.numEncounters[2])).. " || ".. C("dkgray",data.instance[name2])
+						);
 						-- gossip icon replacement
 						iconTexCoords[button.Icon] = {button.Icon:GetTexCoord()};
 						button.Icon:SetTexture("interface\\minimap\\raid");
@@ -471,6 +478,7 @@ local function RegisterOptions()
 end
 
 local function updateOptions()
+	local faction = ns.faction();
 
 	options.args.neutral.hidden=true;
 
@@ -512,7 +520,7 @@ local function updateOptions()
 			for I=1, #npc.imgs do
 				opt.args["pic"..I] = {
 					type = "description", order = 10+I, width = "normal", name = "",
-					image = imgPath..npc.imgs[I], imageWidth = imgSize, imageHeight = imgSize
+					image = imgPath..npc.imgs[I]:format(faction), imageWidth = imgSize, imageHeight = imgSize
 				}
 			end
 		end
@@ -603,7 +611,7 @@ frame:SetScript("OnEvent",function(self,event,...)
 		end
 	elseif not ns.faction(true) and (event=="PLAYER_LOGIN" or event=="NEUTRAL_FACTION_SELECT_RESULT") then
 		RequestRaidInfo();
-		ns.npcs_update();
+		ns.load_data();
 		updateOptions();
 	elseif event=="BOSS_KILL" then
 		local encounterID,name = ...;
