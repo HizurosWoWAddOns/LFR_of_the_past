@@ -264,7 +264,7 @@ local function OnGossipShow()
 			Buttons = GossipFrame.buttons;
 		end
 		for i,button in ipairs(Buttons)do
-			if button:IsShown() then
+			if button:IsShown() and button.type=="Gossip" then
 				local buttonID = button:GetID()
 				local instanceID
 				if ns.gossip2instance[NPC_ID] and #ns.gossip2instance[NPC_ID]>0 then
