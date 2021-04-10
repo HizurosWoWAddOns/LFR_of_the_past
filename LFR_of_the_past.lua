@@ -185,7 +185,7 @@ local InstanceGroups = setmetatable({},{
 --- GossipFrame entries
 
 local function buttonHook_OnEnter(self)
-	if not NPC_ID then return end
+	if not (NPC_ID and self.type=="Gossip") then return end
 	local buttonID = self:GetID();
 	if buttonID and buttons[buttonID] then
 		GameTooltip:SetOwner(self,"ANCHOR_NONE");
