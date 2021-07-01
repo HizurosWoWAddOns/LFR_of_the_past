@@ -1,4 +1,4 @@
-## Interface: 90005
+## Interface: 90100
 ## Title: LFR [of the past]
 ## Notes: Track encounter status of past lfr accessable by npc's like lore seeker han
 ## Author: Hizuro
