@@ -57,12 +57,12 @@ local bossIs = {
 
 do
 	local addon_short = "LFRotp";
-	local colors = {"0099ff","00ff00","ff6060","44ffff","ffff00","ff8800","ff44ff","ffffff"};
+	local colors = {"82c5ff","00ff00","ff6060","44ffff","ffff00","ff8800","ff44ff","ffffff"};
 	local function colorize(...)
 		local t,c,a1 = {tostringall(...)},1,...;
 		if type(a1)=="boolean" then tremove(t,1); end
 		if a1~=false then
-			tinsert(t,1,"|cff0099ff"..((a1==true and addon_short) or (a1=="||" and "||") or addon).."|r"..(a1~="||" and HEADER_COLON or ""));
+			tinsert(t,1,"|cff82c5ff"..((a1==true and addon_short) or (a1=="||" and "||") or addon).."|r"..(a1~="||" and HEADER_COLON or ""));
 			c=2;
 		end
 		for i=c, #t do
@@ -77,6 +77,11 @@ do
 	end
 	function ns.debug(...)
 		ConsolePrint(date("|cff999999%X|r"),colorize(...));
+	end
+	local debugMode = "@project-version@"=="@".."project-version".."@";
+	function ns.debugPrint(...)
+		if not debugMode then return end
+		print(colorize("<debug>",...));
 	end
 end
 
@@ -348,10 +353,14 @@ local function OnGossipHide()
 		icon:SetTexCoord(unpack(texCoord));
 		iconTexCoords[icon]=nil;
 	end
-	ns.debug("OnGossipHide")
 end
 
 GossipFrame:HookScript("OnHide",OnGossipHide);
+
+local function ImmersionFrame_GossipShow()
+	C_Timer.After(0.1,OnGossipShow);
+end
+
 
 ----------------------------------------------------
 -- create into tooltip for raids
@@ -604,9 +613,7 @@ frame:SetScript("OnEvent",function(self,event,...)
 			end
 		elseif (...=="Immersion" or ImmersionFrame) and not immersionHook then
 			immersionHook = true;
-			hooksecurefunc(ImmersionFrame,"GOSSIP_SHOW",function()
-				OnGossipShow(ImmersionFrame)
-			end);
+			hooksecurefunc(ImmersionFrame,"GOSSIP_SHOW",ImmersionFrame_GossipShow);
 			ImmersionFrame:HookScript("OnHide",OnGossipHide);
 		end
 	elseif not ns.faction(true) and (event=="PLAYER_LOGIN" or event=="NEUTRAL_FACTION_SELECT_RESULT") then
