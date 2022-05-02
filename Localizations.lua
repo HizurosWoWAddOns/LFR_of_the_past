@@ -1,74 +1,34 @@
 
-local addon, ns = ...
+local L, addon, ns = {}, ...;
 
-local L = {};
 ns.L = setmetatable(L,{__index=function(t,k)
 	local v = tostring(k);
 	rawset(t,k,v);
-	return v
+	return v;
 end});
 
 -- Do you want to help localize this addon?
--- https://www.curseforge.com/wow/addons/lfr-of-the-past/localization
-
---@do-not-package@
-L["LFR_of_the_past"] = "LFR [of the past]"
-L["AddOnLoaded"] = "AddOn loaded..."
-L["AddOnLoadedDesc"] = "Display 'AddOn loaded...' message on login"
-L["MinimapIcon"] = "Minimap icon"
-L["MinimapIconDesc"] = "Show icon on minimap"
-L["TomTomMissing"] = "Missing addon TomTom"
-L["TomTomAdd"] = "Add to tomtom"
-L["PlayerNeutral"] = "You are faction neutral. This addon required a choosen faction to work."
-L["Coordinates"] = "Coordinates"
-L["Click"] = "Click"
-L["Open LFR [of the past] info panel"] = "Open LFR [of the past] info panel"
-L["MinimapETT"] = "Minimap button"
-L["MinimapETTDesc"] = "Adds encounter tooltip to the addon own minimap button tooltip. Without a data broker panel addon like Titan Panel, you should enable \"Minimap icon\" to display the encounter tooltip."
-L["InstanceEyeETT"] = "Instance eye"
-L["InstanceEyeETTDesc"] = "Adds encounter tooltip to blizzards standard ui instance eye on minimap"
---@end-do-not-package@
+-- https://www.curseforge.com/wow/addons/@cf-project-name@/localization
 
 --@localization(locale="enUS", format="lua_additive_table", handle-subnamespaces="none", handle-unlocalized="ignore")@
-
 if LOCALE_deDE then
---@do-not-package@
---@end-do-not-package@
 --@localization(locale="deDE", format="lua_additive_table", handle-subnamespaces="none", handle-unlocalized="ignore")@
-end
-
-if LOCALE_esES then
+elseif LOCALE_esES then
 --@localization(locale="esES", format="lua_additive_table", handle-subnamespaces="none", handle-unlocalized="ignore")@
-end
-
-if LOCALE_esMX then
+elseif LOCALE_esMX then
 --@localization(locale="esMX", format="lua_additive_table", handle-subnamespaces="none", handle-unlocalized="ignore")@
-end
-
-if LOCALE_frFR then
+elseif LOCALE_frFR then
 --@localization(locale="frFR", format="lua_additive_table", handle-subnamespaces="none", handle-unlocalized="ignore")@
-end
-
-if LOCALE_itIT then
+elseif LOCALE_itIT then
 --@localization(locale="itIT", format="lua_additive_table", handle-subnamespaces="none", handle-unlocalized="ignore")@
-end
-
-if LOCALE_koKR then
+elseif LOCALE_koKR then
 --@localization(locale="koKR", format="lua_additive_table", handle-subnamespaces="none", handle-unlocalized="ignore")@
-end
-
-if LOCALE_ptBR or LOCALE_ptPT then
+elseif LOCALE_ptBR or LOCALE_ptPT then
 --@localization(locale="ptBR", format="lua_additive_table", handle-subnamespaces="none", handle-unlocalized="ignore")@
-end
-
-if LOCALE_ruRU then
+elseif LOCALE_ruRU then
 --@localization(locale="ruRU", format="lua_additive_table", handle-subnamespaces="none", handle-unlocalized="ignore")@
-end
-
-if LOCALE_zhCN then
+elseif LOCALE_zhCN then
 --@localization(locale="zhCN", format="lua_additive_table", handle-subnamespaces="none", handle-unlocalized="ignore")@
-end
-
-if LOCALE_zhTW then
+elseif LOCALE_zhTW then
 --@localization(locale="zhTW", format="lua_additive_table", handle-subnamespaces="none", handle-unlocalized="ignore")@
 end

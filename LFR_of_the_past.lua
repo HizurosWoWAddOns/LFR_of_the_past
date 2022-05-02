@@ -430,7 +430,7 @@ local function RegisterOptions()
 		args = {
 			AddOnLoaded = {
 				type = "toggle", order = 1,
-				name = L["AddOnLoaded"], desc = L["AddOnLoadedDesc"]
+				name = L["AddOnLoaded"], desc = L["AddOnLoadedDesc"].."|n|n|cff44ff44"..L["AddOnLoadedDescAlt"].."|r"
 			},
 			minimap = {
 				type = "toggle", order = 2,
@@ -608,7 +608,7 @@ frame:SetScript("OnEvent",function(self,event,...)
 
 			RegisterDataBroker();
 
-			if db.profile.AddOnLoaded then
+			if db.profile.AddOnLoaded or IsShiftKeyDown() then
 				ns.print(L["AddOnLoaded"]);
 			end
 		elseif (...=="Immersion" or ImmersionFrame) and not immersionHook then
