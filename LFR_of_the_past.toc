@@ -1,4 +1,4 @@
-## Interface: 90200
+## Interface: 90207
 ## Title: LFR [of the past]
 ## Notes: Track encounter status of past lfr accessable by npc's like lore seeker han
 ## Author: Hizuro
@@ -21,4 +21,9 @@ libs\AceConfig-3.0\AceConfig-3.0.xml
 
 Localizations.lua
 data.lua
+#@do-not-package@
+localizations.workfile.lua
+.dev.lua
+#@end-do-not-package@
+libs/HizurosSharedTools/HizurosSharedTools.lua
 LFR_of_the_past.lua
