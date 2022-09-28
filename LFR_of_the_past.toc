@@ -25,5 +25,5 @@ data.lua
 localizations.workfile.lua
 .dev.lua
 #@end-do-not-package@
-libs/HizurosSharedTools/HizurosSharedTools.lua
+libs\HizurosSharedTools\HizurosSharedTools.lua
 LFR_of_the_past.lua

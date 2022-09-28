@@ -34,15 +34,12 @@ externals:
         tag: latest
 
     libs/HizurosSharedTools:
-        url: https://github.com/HizurosWoWAddOns/.github
+        url: https://github.com/HizurosWoWAddOns/HizurosSharedTools
 
 enable-nolib-creation: no
 
 ignore:
     - libs/LibStub/tests
-    - libs/LibStub/LibStub.toc
-    - libs/CallbackHandler-1.0/CallbackHandler-1.0.xml
-    - libs/LibDBIcon-1.0/lib.xml
     - libs/LibColors-1.0/.pkgmeta
     - libs/LibColors-1.0/colors_fed_standard_595.lua
     - libs/LibColors-1.0/colors_web.lua
@@ -52,6 +49,5 @@ ignore:
     - libs/LibColors-1.0/LibColors-1.0-web.xml
     - libs/LibColors-1.0/LibColors-1.0-x11.xml
     - libs/LibColors-1.0/LibColors-1.0.toc
-    - libs/HizurosSharedTools/profile
     - libs/HizurosSharedTools/README.md
 

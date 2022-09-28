@@ -4,6 +4,8 @@
 
 local addon, ns = ...;
 local L = ns.L;
+ns:debugMode = "@project-version@"=="@".."project-version".."@";
+LibStub("HizurosSharedTools").RegisterPrint(ns,addon,"LFRotp");
 
 local ACD = LibStub("AceConfigDialog-3.0");
 local LDB = LibStub("LibDataBroker-1.1");
@@ -55,35 +57,6 @@ local bossIs = {
 	alive="|Tinterface/questtypeicons:18:18:0:0:128:64:0:18:36:54|t"..C("ltyellow","%s")
 }
 
-do
-	local addon_short = "LFRotp";
-	local colors = {"82c5ff","00ff00","ff6060","44ffff","ffff00","ff8800","ff44ff","ffffff"};
-	local function colorize(...)
-		local t,c,a1 = {tostringall(...)},1,...;
-		if type(a1)=="boolean" then tremove(t,1); end
-		if a1~=false then
-			tinsert(t,1,"|cff82c5ff"..((a1==true and addon_short) or (a1=="||" and "||") or addon).."|r"..(a1~="||" and HEADER_COLON or ""));
-			c=2;
-		end
-		for i=c, #t do
-			if not t[i]:find("\124c") then
-				t[i],c = "|cff"..colors[c]..t[i].."|r", c<#colors and c+1 or 1;
-			end
-		end
-		return unpack(t);
-	end
-	function ns.print(...)
-		print(colorize(...));
-	end
-	function ns.debug(...)
-		ConsolePrint(date("|cff999999%X|r"),colorize(...));
-	end
-	local debugMode = "@project-version@"=="@".."project-version".."@";
-	function ns.debugPrint(...)
-		if not debugMode then return end
-		print(colorize("<debug>",...));
-	end
-end
 
 ------------------------------------------------
 -- GameTooltip to get localized names and other informations
@@ -609,7 +582,7 @@ frame:SetScript("OnEvent",function(self,event,...)
 			RegisterDataBroker();
 
 			if db.profile.AddOnLoaded or IsShiftKeyDown() then
-				ns.print(L["AddOnLoaded"]);
+				ns:print(L["AddOnLoaded"]);
 			end
 		elseif (...=="Immersion" or ImmersionFrame) and not immersionHook then
 			immersionHook = true;
@@ -655,7 +628,7 @@ frame:SetScript("OnEvent",function(self,event,...)
 			pattern = "RAID_INSTANCE_WELCOME";
 		end
 		if instance then
-			ns.debug(pattern,instance,timeout);
+			ns:debug(pattern,instance,timeout);
 		end
 		--]]
 		--  Willkommen in der Instanz "Terrasse des Endlosen Frühlings (Schlachtzugsbrowser)". Instanzzuordnungen laufen in 1 |4Tag:Tage; 20 |4Stunde:Stunden; aus.
