@@ -4,7 +4,7 @@
 
 local addon, ns = ...;
 local L = ns.L;
-ns:debugMode = "@project-version@"=="@".."project-version".."@";
+ns.debugMode = "@project-version@"=="@".."project-version".."@";
 LibStub("HizurosSharedTools").RegisterPrint(ns,addon,"LFRotp");
 
 local ACD = LibStub("AceConfigDialog-3.0");
@@ -426,7 +426,7 @@ local function RegisterOptions()
 			neutral = {
 				type = "description", order = 5, fontSize = "large",
 				name = L["PlayerNeutral"],
-			}
+			},
 			-- npcs added by function updateOptions
 		}
 	};
@@ -456,7 +456,10 @@ local function RegisterOptions()
 	--options.args.profiles.order=-1;
 
 	LibStub("AceConfig-3.0"):RegisterOptionsTable(L[addon], options);
-	LibStub("AceConfigDialog-3.0"):AddToBlizOptions(L[addon]);
+	local opts = LibStub("AceConfigDialog-3.0"):AddToBlizOptions(L[addon]);
+	LibStub("HizurosSharedTools").BlizzOptions_ExpandOnShow(opts);
+
+	LibStub("HizurosSharedTools").AddCredit(L[addon]); -- options.args.credits.args
 end
 
 local function updateOptions()

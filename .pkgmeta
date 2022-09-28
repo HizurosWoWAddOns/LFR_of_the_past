@@ -34,7 +34,7 @@ externals:
         tag: latest
 
     libs/HizurosSharedTools:
-        url: https://github.com/HizurosWoWAddOns/HizurosSharedTools
+        url: https://github.com/HizurosWoWAddOns/HizurosSharedTools.git
 
 enable-nolib-creation: no
 
