@@ -238,12 +238,12 @@ local function OnGossipShow()
 		if ImmersionFrame then
 			Buttons = ImmersionFrame.TitleButtons.Buttons;
 			isImmersion = true;
-		elseif GossipFrame.buttons then
-			Buttons = GossipFrame.buttons;
+		elseif GossipFrame.gossipOptions then
+			Buttons = GossipFrame.gossipOptions;
 		end
 		for i,button in ipairs(Buttons)do
-			if button:IsShown() and button.type=="Gossip" then
-				local buttonID = button:GetID()
+			if not ImmersionFrame or (button:IsShown() and button.type=="Gossip") then
+				local buttonID = ImmersionFrame and button:GetID() or (button.orderIndex + 1)
 				local instanceID
 				if ns.gossip2instance[NPC_ID] and #ns.gossip2instance[NPC_ID]>0 then
 					instanceID = ns.gossip2instance[NPC_ID][buttonID];
@@ -297,15 +297,12 @@ local function OnGossipShow()
 						button.Icon:SetTexCoord(0.20,0.80,0.20,0.80);
 					else -- GossipFrame
 						-- gossip text replacement
-						button:SetText(
+						button.name =
 							data.instance[name]..showID.."\n"..
 							"|Tinterface\\lfgframe\\ui-lfg-icon-heroic:12:12:0:0:32:32:0:16:0:16|t "..C("dkred",_G.GENERIC_FRACTION_STRING:format(data.numEncounters[1],data.numEncounters[2])).. " || ".. C("dkgray",data.instance[name2])
-						);
 						-- gossip icon replacement
-						iconTexCoords[button.Icon] = {button.Icon:GetTexCoord()};
-						button.Icon:SetTexture("interface\\minimap\\raid");
-						button.Icon:SetTexCoord(0.20,0.80,0.20,0.80);
-						button:Resize();
+						button.icon = 1502548
+						
 					end
 					if not hookedButton["button"..buttonID] then
 						button:HookScript("OnEnter",buttonHook_OnEnter);
