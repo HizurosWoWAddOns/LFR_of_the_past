@@ -29,8 +29,8 @@ LC.colorset({
 	["dkyellow"]	= "ffcc00",
 	["ltorange"]	= "ff9d6a",
 	["dkorange"]	= "905d0a",
-	["ltred"]		= "ff8080",
-	["dkred"]		= "800000",
+	["ltred"]			= "ff8080",
+	["dkred"]			= "800000",
 	["violet"]		= "f000f0",
 	["ltviolet"]	= "f060f0",
 	["dkviolet"]	= "800080",
@@ -42,9 +42,9 @@ LC.colorset({
 	["ltgreen"]		= "80ff80",
 	["dkgreen"]		= "00aa00",
 	["dkgray"]		= "404040",
-	["gray2"]		= "A0A0A0",
+	["gray2"]			= "A0A0A0",
 	["ltgray"]		= "b0b0b0",
-	["gold"]		= "ffd700",
+	["gold"]			= "ffd700",
 	["silver"]		= "eeeeef",
 	["copper"]		= "f0a55f",
 	["unknown"]		= "ee0000",
@@ -52,9 +52,9 @@ LC.colorset({
 
 local bossIs = {
 	--dead="|Tinterface/minimap/ObjectIconsAtlas: |t "..C("gray","%s"),
-	--alive="|Tinterface\\lfgframe\\ui-lfg-icon-heroic:12:12:0:0:32:32:0:16:0:16|t "..C("ltyellow","%s")
+	--alive="|Tinterface\\lfgframe\\ui-lfg-icon-heroic:12:12:0:0:32:32:0:16:0:16|t "..C("fffff569","%s")
 	dead="|Tinterface/questtypeicons:18:18:0:0:128:64:108:126:18:36|t"..C("gray","%s"),
-	alive="|Tinterface/questtypeicons:18:18:0:0:128:64:0:18:36:54|t"..C("ltyellow","%s")
+	alive="|Tinterface/questtypeicons:18:18:0:0:128:64:0:18:36:54|t"..C("fffff569","%s")
 }
 
 
@@ -64,7 +64,7 @@ local bossIs = {
 ns.scanTT = CreateFrame("GameTooltip",addon.."_ScanTT",UIParent,"GameTooltipTemplate");
 ns.scanTT:SetScale(0.0001); ns.scanTT:SetAlpha(0); ns.scanTT:Hide();
 -- unset script functions shipped by GameTooltipTemplate to prevent errors
-for _,v in ipairs({"OnLoad","OnHide","OnTooltipAddMoney","OnTooltipSetDefaultAnchor","OnTooltipCleared"})do ns.scanTT:SetScript(v,nil); end
+for _,v in ipairs({"OnLoad","OnHide","OnTooltipSetDefaultAnchor","OnTooltipCleared"})do ns.scanTT:SetScript(v,nil); end
 
 function ns.scanTT:GetStringRegions(dataFunction,...)
 	if type(self[dataFunction])~="function" then return false; end
@@ -162,68 +162,6 @@ local InstanceGroups = setmetatable({},{
 ----------------------------------------------------
 --- GossipFrame entries
 
-local function buttonHook_OnEnter(self)
-	if not (NPC_ID and self.type=="Gossip") then return end
-	local buttonID = self:GetID();
-	if buttonID and buttons[buttonID] then
-		GameTooltip:SetOwner(self,"ANCHOR_NONE");
-		if ImmersionFrame then
-			GameTooltip:SetPoint("RIGHT",self,"LEFT",-4,0)
-		else
-			GameTooltip:SetPoint("LEFT",GossipFrame,"RIGHT");
-		end
-
-		local showID = "";
-		if false then
-			showID = " " .. C("ltblue","("..buttons[buttonID].instanceID..")");
-		end
-
-		-- instance name
-		GameTooltip:AddLine(buttons[buttonID].instance[name].. showID);
-
-		-- instance group name (for raids splitted into multible lfr instances)
-		if not ns.noSubtitle[NPC_ID] and buttons[buttonID].instance[name]~=buttons[buttonID].instance[name2] then
-			GameTooltip:AddLine(C("gray",buttons[buttonID].instance[name2]));
-		end
-
-		-- instance description
-		if buttons[buttonID].instance[description] and buttons[buttonID].instance[description]~="" then
-			GameTooltip:AddLine(" ");
-			GameTooltip:AddLine(buttons[buttonID].instance[description],1,1,1,1);
-		end
-
-		-- instance encounter list
-		local bosses = {};
-		if ns.instance2bosses[buttons[buttonID].instanceID] then
-			bosses = ns.instance2bosses[buttons[buttonID].instanceID];
-		else
-			local numBosses = GetLFGDungeonNumEncounters(buttons[buttonID].instanceID) or 0;
-			for i=1, numBosses do
-				tinsert(bosses,i);
-			end
-		end
-
-		if #bosses>0 then
-			GameTooltip:AddLine(" ");
-			for i=1, #bosses do
-				local boss, _, isKilled = GetLFGDungeonEncounterInfo(buttons[buttonID].instanceID,bosses[i]);
-				local n = (buttons[buttonID].instance[name2] or buttons[buttonID].instance[name]).."-"..buttons[buttonID].instance[difficulty];
-				if not isKilled and killedEncounter[n] and killedEncounter[n][boss] then
-					isKilled = true;
-				end
-				GameTooltip:AddDoubleLine(C("ltblue",boss),isKilled and C("red",BOSS_DEAD) or C("green",BOSS_ALIVE));
-			end
-		end
-
-		GameTooltip:Show();
-	end
-end
-
-local function buttonHook_OnLeave()
-	if not NPC_ID then return end
-	GameTooltip:Hide();
-end
-
 local function OnGossipShow()
 	wipe(buttons); wipe(iconTexCoords);
 	local id,_ = UnitGUID("npc");
@@ -238,12 +176,12 @@ local function OnGossipShow()
 		if ImmersionFrame then
 			Buttons = ImmersionFrame.TitleButtons.Buttons;
 			isImmersion = true;
-		elseif GossipFrame.buttons then
-			Buttons = GossipFrame.buttons;
+		elseif GossipFrame.gossipOptions then
+			Buttons = GossipFrame.gossipOptions;
 		end
 		for i,button in ipairs(Buttons)do
-			if button:IsShown() and button.type=="Gossip" then
-				local buttonID = button:GetID()
+			if not ImmersionFrame or (button:IsShown() and button.type=="Gossip") then
+				local buttonID = ImmersionFrame and button:GetID() or (button.orderIndex + 1)
 				local instanceID
 				if ns.gossip2instance[NPC_ID] and #ns.gossip2instance[NPC_ID]>0 then
 					instanceID = ns.gossip2instance[NPC_ID][buttonID];
@@ -288,8 +226,8 @@ local function OnGossipShow()
 						-- gossip text replacement
 						button:SetText(
 							data.instance[name] ..showID.."\n"..
-							C("ltgray",data.instance[name2]) .."\n"..
-							"|Tinterface\\lfgframe\\ui-lfg-icon-heroic:12:12:0:0:32:32:0:16:0:16|t "..C("ltred",_G.GENERIC_FRACTION_STRING:format(data.numEncounters[1],data.numEncounters[2]))
+							C("ffb0b0b0",data.instance[name2]) .."\n"..
+							"|Tinterface\\lfgframe\\ui-lfg-icon-heroic:12:12:0:0:32:32:0:16:0:16|t "..C("ffff8080",_G.GENERIC_FRACTION_STRING:format(data.numEncounters[1],data.numEncounters[2]))
 						);
 						-- gossip icon replacement
 						iconTexCoords[button.Icon] = {button.Icon:GetTexCoord()};
@@ -297,20 +235,11 @@ local function OnGossipShow()
 						button.Icon:SetTexCoord(0.20,0.80,0.20,0.80);
 					else -- GossipFrame
 						-- gossip text replacement
-						button:SetText(
+						button.name =
 							data.instance[name]..showID.."\n"..
-							"|Tinterface\\lfgframe\\ui-lfg-icon-heroic:12:12:0:0:32:32:0:16:0:16|t "..C("dkred",_G.GENERIC_FRACTION_STRING:format(data.numEncounters[1],data.numEncounters[2])).. " || ".. C("dkgray",data.instance[name2])
-						);
+							"|Tinterface\\lfgframe\\ui-lfg-icon-heroic:12:12:0:0:32:32:0:16:0:16|t "..C("ff800000",_G.GENERIC_FRACTION_STRING:format(data.numEncounters[1],data.numEncounters[2])).. " || ".. C("ff404040",data.instance[name2])
 						-- gossip icon replacement
-						iconTexCoords[button.Icon] = {button.Icon:GetTexCoord()};
-						button.Icon:SetTexture("interface\\minimap\\raid");
-						button.Icon:SetTexCoord(0.20,0.80,0.20,0.80);
-						button:Resize();
-					end
-					if not hookedButton["button"..buttonID] then
-						button:HookScript("OnEnter",buttonHook_OnEnter);
-						button:HookScript("OnLeave",buttonHook_OnLeave);
-						hookedButton["button"..buttonID] = true;
+						button.icon = 1502548
 					end
 					buttons[buttonID] = data;
 				end
@@ -318,8 +247,7 @@ local function OnGossipShow()
 		end
 	end
 end
-
-hooksecurefunc("GossipFrameUpdate",OnGossipShow)
+GossipFrame:HookScript("OnShow",OnGossipShow);
 
 local function OnGossipHide()
 	for icon, texCoord in pairs(iconTexCoords)do
@@ -327,8 +255,74 @@ local function OnGossipHide()
 		iconTexCoords[icon]=nil;
 	end
 end
-
 GossipFrame:HookScript("OnHide",OnGossipHide);
+
+hooksecurefunc(GossipOptionButtonMixin, "Setup", function(self, optionInfo)
+	local buttonID = optionInfo.orderIndex + 1;
+
+	-- SetScript "OnEnter" for Gossip Buttons
+	self:SetScript("OnEnter", function()
+		if (not NPC_ID) then return end
+		if buttonID and buttons[buttonID] then
+			GameTooltip:SetOwner(self,"ANCHOR_NONE");
+			if ImmersionFrame then
+				GameTooltip:SetPoint("RIGHT",self,"LEFT",-4,0)
+			else
+				GameTooltip:SetPoint("LEFT",GossipFrame,"RIGHT");
+			end
+
+			local showID = "";
+			if false then
+				showID = " " .. C("ff69ccf0","("..buttons[buttonID].instanceID..")");
+			end
+
+			-- instance name
+			GameTooltip:AddLine(buttons[buttonID].instance[name].. showID);
+
+			-- instance group name (for raids splitted into multible lfr instances)
+			if not ns.noSubtitle[NPC_ID] and buttons[buttonID].instance[name]~=buttons[buttonID].instance[name2] then
+				GameTooltip:AddLine(C("gray",buttons[buttonID].instance[name2]));
+			end
+
+			-- instance description
+			if buttons[buttonID].instance[description] and buttons[buttonID].instance[description]~="" then
+				GameTooltip:AddLine(" ");
+				GameTooltip:AddLine(buttons[buttonID].instance[description],1,1,1,1);
+			end
+
+			-- instance encounter list
+			local bosses = {};
+			if ns.instance2bosses[buttons[buttonID].instanceID] then
+				bosses = ns.instance2bosses[buttons[buttonID].instanceID];
+			else
+				local numBosses = GetLFGDungeonNumEncounters(buttons[buttonID].instanceID) or 0;
+				for i=1, numBosses do
+					tinsert(bosses,i);
+				end
+			end
+
+			if #bosses>0 then
+				GameTooltip:AddLine(" ");
+				for i=1, #bosses do
+					local boss, _, isKilled = GetLFGDungeonEncounterInfo(buttons[buttonID].instanceID,bosses[i]);
+					local n = (buttons[buttonID].instance[name2] or buttons[buttonID].instance[name]).."-"..buttons[buttonID].instance[difficulty];
+					if not isKilled and killedEncounter[n] and killedEncounter[n][boss] then
+						isKilled = true;
+					end
+					GameTooltip:AddDoubleLine(C("ff69ccf0",boss),isKilled and C("red",BOSS_DEAD) or C("green",BOSS_ALIVE));
+				end
+			end
+
+			GameTooltip:Show();
+		end
+	end);
+
+	-- SetScript "OnLeave" for Gossip Buttons
+	self:SetScript("OnLeave", function()
+		if not NPC_ID then return end
+		GameTooltip:Hide();
+	end);
+end)
 
 local function ImmersionFrame_GossipShow()
 	C_Timer.After(0.1,OnGossipShow);
@@ -351,7 +345,7 @@ local function CreateEncounterTooltip(parent)
 
 			for i=1, #data do
 				GameTooltip:AddLine(" ");
-				GameTooltip:AddLine(C("ltblue",data[i][2]));
+				GameTooltip:AddLine(C("ff69ccf0",data[i][2]));
 
 				local encounter = GetEncounterStatus(data[i][1]);
 				local i2b = ns.instance2bosses[data[i][1]];
@@ -476,11 +470,11 @@ local function updateOptions()
 				desc = {
 					type = "description", order = 1, fontSize = "medium",
 					name =
-						C("dkyellow",NAME..CHAT_HEADER_SUFFIX) .. L["NPC"..npc[1]]
+						C("ffffcc00",NAME..CHAT_HEADER_SUFFIX) .. L["NPC"..npc[1]]
 						.. "|n" ..
-						C("dkyellow",ZONE..CHAT_HEADER_SUFFIX) .. npc.zoneName
+						C("ffffcc00",ZONE..CHAT_HEADER_SUFFIX) .. npc.zoneName
 						.. "|n" ..
-						C("dkyellow",L["Coordinates"]..CHAT_HEADER_SUFFIX) .. npc[3].." "..npc[4],
+						C("ffffcc00",L["Coordinates"]..CHAT_HEADER_SUFFIX) .. npc[3].." "..npc[4],
 				}
 			}
 		}
@@ -489,7 +483,14 @@ local function updateOptions()
 				type = "execute", order = 2,
 				name = L["TomTomAdd"],
 				func = function()
-					--
+					if npc and npc.tomtomway then
+						local mapID = (npc.tomtomway.mapid or 0)
+						local x = ((npc.tomtomway.x and npc.tomtomway.x / 100) or 0)
+						local y = ((npc.tomtomway.y and npc.tomtomway.y / 100) or 0)
+						if TomTom and TomTom.AddWaypoint and (mapID > 0) then
+							TomTom:AddWaypoint(mapID, x, y, { title = L["NPC"..npc[1]], from = addon, persistent = nil, minimap = true, world = true })
+						end
+					end
 				end
 			}
 		else
@@ -548,7 +549,7 @@ local function RegisterDataBroker()
 				tt:AddLine(npc.zoneName..", "..npc[3]..", "..npc[4],.7,.7,.7);
 			end
 			tt:AddLine(" ");
-			tt:AddLine(C("copper",L["Click"]).." || "..C("green",L["Open LFR [of the past] info panel"]));
+			tt:AddLine(C("fff0a55f",L["Click"]).." || "..C("green",L["Open LFR [of the past] info panel"]));
 
 			if db.profile.minimapButtonETT then
 				CreateEncounterTooltip(tt);
