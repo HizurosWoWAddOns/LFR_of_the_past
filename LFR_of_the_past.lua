@@ -29,8 +29,8 @@ LC.colorset({
 	["dkyellow"]	= "ffcc00",
 	["ltorange"]	= "ff9d6a",
 	["dkorange"]	= "905d0a",
-	["ltred"]		= "ff8080",
-	["dkred"]		= "800000",
+	["ltred"]			= "ff8080",
+	["dkred"]			= "800000",
 	["violet"]		= "f000f0",
 	["ltviolet"]	= "f060f0",
 	["dkviolet"]	= "800080",
@@ -42,9 +42,9 @@ LC.colorset({
 	["ltgreen"]		= "80ff80",
 	["dkgreen"]		= "00aa00",
 	["dkgray"]		= "404040",
-	["gray2"]		= "A0A0A0",
+	["gray2"]			= "A0A0A0",
 	["ltgray"]		= "b0b0b0",
-	["gold"]		= "ffd700",
+	["gold"]			= "ffd700",
 	["silver"]		= "eeeeef",
 	["copper"]		= "f0a55f",
 	["unknown"]		= "ee0000",
@@ -52,9 +52,9 @@ LC.colorset({
 
 local bossIs = {
 	--dead="|Tinterface/minimap/ObjectIconsAtlas: |t "..C("gray","%s"),
-	--alive="|Tinterface\\lfgframe\\ui-lfg-icon-heroic:12:12:0:0:32:32:0:16:0:16|t "..C("ltyellow","%s")
+	--alive="|Tinterface\\lfgframe\\ui-lfg-icon-heroic:12:12:0:0:32:32:0:16:0:16|t "..C("fffff569","%s")
 	dead="|Tinterface/questtypeicons:18:18:0:0:128:64:108:126:18:36|t"..C("gray","%s"),
-	alive="|Tinterface/questtypeicons:18:18:0:0:128:64:0:18:36:54|t"..C("ltyellow","%s")
+	alive="|Tinterface/questtypeicons:18:18:0:0:128:64:0:18:36:54|t"..C("fffff569","%s")
 }
 
 
@@ -226,8 +226,8 @@ local function OnGossipShow()
 						-- gossip text replacement
 						button:SetText(
 							data.instance[name] ..showID.."\n"..
-							C("ltgray",data.instance[name2]) .."\n"..
-							"|Tinterface\\lfgframe\\ui-lfg-icon-heroic:12:12:0:0:32:32:0:16:0:16|t "..C("ltred",_G.GENERIC_FRACTION_STRING:format(data.numEncounters[1],data.numEncounters[2]))
+							C("ffb0b0b0",data.instance[name2]) .."\n"..
+							"|Tinterface\\lfgframe\\ui-lfg-icon-heroic:12:12:0:0:32:32:0:16:0:16|t "..C("ffff8080",_G.GENERIC_FRACTION_STRING:format(data.numEncounters[1],data.numEncounters[2]))
 						);
 						-- gossip icon replacement
 						iconTexCoords[button.Icon] = {button.Icon:GetTexCoord()};
@@ -273,7 +273,7 @@ hooksecurefunc(GossipOptionButtonMixin, "Setup", function(self, optionInfo)
 
 			local showID = "";
 			if false then
-				showID = " " .. C("ltblue","("..buttons[buttonID].instanceID..")");
+				showID = " " .. C("ff69ccf0","("..buttons[buttonID].instanceID..")");
 			end
 
 			-- instance name
@@ -309,7 +309,7 @@ hooksecurefunc(GossipOptionButtonMixin, "Setup", function(self, optionInfo)
 					if not isKilled and killedEncounter[n] and killedEncounter[n][boss] then
 						isKilled = true;
 					end
-					GameTooltip:AddDoubleLine(C("ltblue",boss),isKilled and C("red",BOSS_DEAD) or C("green",BOSS_ALIVE));
+					GameTooltip:AddDoubleLine(C("ff69ccf0",boss),isKilled and C("red",BOSS_DEAD) or C("green",BOSS_ALIVE));
 				end
 			end
 
@@ -345,7 +345,7 @@ local function CreateEncounterTooltip(parent)
 
 			for i=1, #data do
 				GameTooltip:AddLine(" ");
-				GameTooltip:AddLine(C("ltblue",data[i][2]));
+				GameTooltip:AddLine(C("ff69ccf0",data[i][2]));
 
 				local encounter = GetEncounterStatus(data[i][1]);
 				local i2b = ns.instance2bosses[data[i][1]];
@@ -470,11 +470,11 @@ local function updateOptions()
 				desc = {
 					type = "description", order = 1, fontSize = "medium",
 					name =
-						C("dkyellow",NAME..CHAT_HEADER_SUFFIX) .. L["NPC"..npc[1]]
+						C("ffffcc00",NAME..CHAT_HEADER_SUFFIX) .. L["NPC"..npc[1]]
 						.. "|n" ..
-						C("dkyellow",ZONE..CHAT_HEADER_SUFFIX) .. npc.zoneName
+						C("ffffcc00",ZONE..CHAT_HEADER_SUFFIX) .. npc.zoneName
 						.. "|n" ..
-						C("dkyellow",L["Coordinates"]..CHAT_HEADER_SUFFIX) .. npc[3].." "..npc[4],
+						C("ffffcc00",L["Coordinates"]..CHAT_HEADER_SUFFIX) .. npc[3].." "..npc[4],
 				}
 			}
 		}
@@ -549,7 +549,7 @@ local function RegisterDataBroker()
 				tt:AddLine(npc.zoneName..", "..npc[3]..", "..npc[4],.7,.7,.7);
 			end
 			tt:AddLine(" ");
-			tt:AddLine(C("copper",L["Click"]).." || "..C("green",L["Open LFR [of the past] info panel"]));
+			tt:AddLine(C("fff0a55f",L["Click"]).." || "..C("green",L["Open LFR [of the past] info panel"]));
 
 			if db.profile.minimapButtonETT then
 				CreateEncounterTooltip(tt);
