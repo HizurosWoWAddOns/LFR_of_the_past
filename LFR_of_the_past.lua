@@ -483,7 +483,14 @@ local function updateOptions()
 				type = "execute", order = 2,
 				name = L["TomTomAdd"],
 				func = function()
-					--
+					if npc and npc.tomtomway then
+						local mapID = (npc.tomtomway.mapid or 0)
+						local x = ((npc.tomtomway.x and npc.tomtomway.x / 100) or 0)
+						local y = ((npc.tomtomway.y and npc.tomtomway.y / 100) or 0)
+						if TomTom and TomTom.AddWaypoint and (mapID > 0) then
+							TomTom:AddWaypoint(mapID, x, y, { title = L["NPC"..npc[1]], from = addon, persistent = nil, minimap = true, world = true })
+						end
+					end
 				end
 			}
 		else

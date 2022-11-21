@@ -7,26 +7,28 @@ ns.npcs = {};
 function ns.load_data()
 	local faction = ns.faction(); --UnitFactionGroup("player")=="Alliance";
 
-	local npc_wod = {94870,582,33.2,37.2,5,"LFR",imgs={"wod1_%s","wod2_%s","wod3_%s"}};
-	local npc_bfa = {177193,1161,74.21,13.53,7,"LFR",imgs={"bfa1_%s","bfa2_%s","bfa3_%s"}};
+	local npc_wod = {94870,582,33.2,37.2,5,"LFR",imgs={"wod1_%s","wod2_%s","wod3_%s"},tomtomway={mapid=0,x=33.2,y=37.2}};
+	local npc_bfa = {177193,1161,74.21,13.53,7,"LFR",imgs={"bfa1_%s","bfa2_%s","bfa3_%s"},tomtomway={mapid=1161,x=74.21,y=13.53}};
 	if faction=="horde" then
 		npc_wod[2],npc_wod[3],npc_wod[4] = 590,41.5,47.0;
 		npc_bfa[1],npc_bfa[2],npc_bfa[3],npc_bfa[4] = 177208,1165,68.62,30.27;
+		npc_wod.tomtomway={mapid=590,x=41.5,y=47.0}
+		npc_bfa.tomtomway={mapid=1164,x=68.62,y=30.27}
 	end
 
 	-- {<npcis>, <zoneid>, <posX>, <posY>, <expansionNumber>, <instanceType>}
 	-- expansionNumber is for _G["EXPANSION_NAME"..<expansionNumber>]
 	ns.npcs = {
 		-- cata
-		{80675,74,63.1,27.3,3,"LFR",imgs={"cata1","cata2","cata3","cata4"}},
+		{80675,74,63.1,27.3,3,"LFR",imgs={"cata1","cata2","cata3","cata4"},tomtomway={mapid=75,x=63.1,y=27.3}},
 		-- mop
 		--{78709,390,82.95,30.38,4,"SZN"}, -- szenarios
 		--{78777,390,83.05,30.48,4,"SZHC"}, -- hc szenarios
-		{80633,390,83.16,30.56,4,"LFR",imgs={"mop1","mop2","mop3"}}, -- lfr
+		{80633,390,83.16,30.56,4,"LFR",imgs={"mop1","mop2","mop3"},tomtomway={mapid=390,x=83.16,y=30.56}}, -- lfr
 		-- WoD, lfr (same npc id and different location for alliance and horde)
 		npc_wod,
 		-- legion
-		{111246,627,63.6,55.6,6,"LFR",imgs={"legion1","legion2","legion3"}},
+		{111246,627,63.6,55.6,6,"LFR",imgs={"legion1","legion2","legion3"},tomtomway={mapid=627,x=63.6,y=55.6}},
 		-- bfa
 		npc_bfa
 	};
@@ -176,4 +178,3 @@ ns.lfrID = {
 	1287,1288,1289,1411,1290,1291,1292,1293,1494,1495,1496,1497,1610,1611,1612,1613, -- legion
 	-- 1731,1732,1733,1945,1946,1947,1951, -- bfa
 }
-
