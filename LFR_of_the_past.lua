@@ -505,19 +505,29 @@ local function updateOptions()
 				}
 			}
 		}
-		if TomTom then
-			opt.args.tomtom = {
-				type = "execute", order = 2,
-				name = L["TomTomAdd"],
-				func = function()
-					--
-				end
-			}
-		else
-			opt.args.tomtom = {
-				type = "description", order = 2,
-				name = C("orange",L["TomTomMissing"])
-			}
+		if npc[3] and npc[4] then
+			if TomTom then
+				opt.args.tomtom = {
+					type = "execute", order = 2,
+					name = L["TomTomAdd"],
+					func = function()
+						if not (npc and TomTom.AddWaypoint) then return end
+						TomTom:AddWaypoint(npc[2],npc[3]/100,npc[4]/100,{
+							title = L["NPC"..npc[1]],
+							from = addon,
+							persistent = nil,
+							minimap = true,
+							world = true
+						});
+						-- Thanks @ fuba82@github for reminding me. i've forgot to add this function content. :-)
+					end
+				}
+			else
+				opt.args.tomtom = {
+					type = "description", order = 2,
+					name = C("orange",L["TomTomMissing"])
+				}
+			end
 		end
 		if npc.imgs then
 			opt.args["pics_spacer"] = {
