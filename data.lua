@@ -28,7 +28,9 @@ function ns.load_data()
 		-- legion
 		{111246,627,63.6,55.6,6,"LFR",imgs={"legion1","legion2","legion3"}},
 		-- bfa
-		npc_bfa
+		npc_bfa,
+		-- shadowlands
+		{0,1670,false,false,8,"LRF"},
 	};
 
 	ns.instance2bosses = {

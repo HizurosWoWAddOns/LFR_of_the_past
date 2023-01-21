@@ -8,16 +8,9 @@ local ACD = LibStub("AceConfigDialog-3.0");
 local LDB = LibStub("LibDataBroker-1.1");
 local LDBIcon = LibStub("LibDBIcon-1.0", true);
 
-local realm,character,faction = GetRealmName();
-local buttons,hookedButton,died,NPC_ID,db = {},{},{},false,(UnitGUID("target"));
-local name, typeID, subtypeID, minLevel, maxLevel, recLevel, minRecLevel, maxRecLevel, expansionLevel, groupID, texture = 1,2,3,4,5,6,7,8,9,10,11; -- GetLFGDungeonInfo
-local difficulty, maxPlayers, description, isHoliday, bonusRepAmount, minPlayers, isTimeWalker, name2, minGearLevel = 12,13,14,15,16,17,18,19,20; -- GetLFGDungeonInfo
-local iconTexCoords,killedEncounter,BossKillQueryUpdate,UpdateInstanceInfoLock,currentInstance = {},{},false,false,{};
-local imgSize,imgPath,isImmersionFrameHookOnHide = 168,"Interface\\AddOns\\LFR_of_the_past\\media\\";
-local pat = {
-	RAID_INSTANCE_WELCOME = _G.RAID_INSTANCE_WELCOME_LOCKED:gsub("%%s","(.*)"),
-	RAID_INSTANCE_WELCOME_LOCKED = _G.RAID_INSTANCE_WELCOME_LOCKED:gsub("%%s","(.*)")
-};
+local buttons,hookedButton,NPC_ID,db = {},{};
+local iconTexCoords,killedEncounter,BossKillQueryUpdate,UpdateInstanceInfoLock = {},{},false,false;
+local imgSize,imgPath = 168,"Interface\\AddOns\\LFR_of_the_past\\media\\";
 
 local LC = LibStub("LibColors-1.0");
 local C = LC.color;
@@ -88,9 +81,45 @@ function ns.faction(isNeutral)
 	return faction;
 end
 
-local function IsInstance()
-	local _, _, difficulty = GetInstanceInfo();
-	return difficulty==7 or difficulty==17;
+local function GetInstanceDataByID(instanceID)
+	local data = {
+		groupName = false,
+		instanceID = instanceID,
+		instanceInfo = {},
+		numEncounters = {0,0},
+		encounters = {}
+	};
+	local info = {};
+	info.name, info.typeID, info.subtypeID, info.minLevel, info.maxLevel, info.recLevel, info.minRecLevel, info.maxRecLevel, info.expansionLevel,
+	info.groupID, info.textureFilename, info.difficulty, info.maxPlayers, info.description, info.isHoliday, info.bonusRepAmount, info.minPlayers,
+	info.isTimeWalker, info.name2, info.minGearLevel, info.isScalingDungeon, info.lfgMapID = GetLFGDungeonInfo(instanceID);
+	data.instanceInfo = info;
+
+	if data.instanceInfo.name~=data.instanceInfo.name2 then
+		data.groupName = data.instanceInfo.name2;
+	end
+	local bossIndexes = {};
+	if ns.instance2bosses[instanceID] then
+		bossIndexes = ns.instance2bosses[instanceID];
+		data.numEncounters[2] = #ns.instance2bosses[instanceID];
+	else
+		data.numEncounters[2] = GetLFGDungeonNumEncounters(instanceID);
+		for i=1, data.numEncounters[2] do
+			tinsert(bossIndexes,i);
+		end
+	end
+	for _,i in ipairs(bossIndexes) do
+		local boss, _, isKilled = GetLFGDungeonEncounterInfo(instanceID,i);
+		local n = (data.instanceInfo.name2 or data.instanceInfo.name).."-"..data.instanceInfo.difficulty;
+		if not isKilled and killedEncounter[n] and killedEncounter[n][boss] then
+			isKilled = true;
+		end
+		if isKilled then
+			data.numEncounters[1] = data.numEncounters[1] + 1;
+			tinsert(data.encounters,boss);
+		end
+	end
+	return data;
 end
 
 local function RequestRaidInfoUpdate()
@@ -129,6 +158,14 @@ local function GetEncounterStatus(instanceID)
 	return encounter;
 end
 
+local function UpdateNpcID()
+	local id,_ = UnitGUID("npc");
+	if id then
+		_,_,_,_,_,id = strsplit('-',id);
+	end
+	NPC_ID = tonumber(id);
+end
+
 local instanceGroupsBuild = false;
 local InstanceGroups = setmetatable({},{
 	__index = function(t,k)
@@ -155,8 +192,8 @@ local InstanceGroups = setmetatable({},{
 --- GossipFrame entries
 
 local function buttonHook_OnEnter(self)
-	if not (NPC_ID and self.type=="Gossip") then return end
-	local buttonID = self:GetID();
+	if not (NPC_ID and self.GetElementData) then return end
+	local buttonID = self.GetElementData().index;
 	if buttonID and buttons[buttonID] then
 		GameTooltip:SetOwner(self,"ANCHOR_NONE");
 		if ImmersionFrame then
@@ -171,17 +208,17 @@ local function buttonHook_OnEnter(self)
 		end
 
 		-- instance name
-		GameTooltip:AddLine(buttons[buttonID].instance[name].. showID);
+		GameTooltip:AddLine(buttons[buttonID].instanceInfo.name.. showID);
 
 		-- instance group name (for raids splitted into multible lfr instances)
-		if not ns.noSubtitle[NPC_ID] and buttons[buttonID].instance[name]~=buttons[buttonID].instance[name2] then
-			GameTooltip:AddLine(C("gray",buttons[buttonID].instance[name2]));
+		if not ns.noSubtitle[NPC_ID] and buttons[buttonID].instanceInfo.name~=buttons[buttonID].instanceInfo.name2 then
+			GameTooltip:AddLine(C("gray",buttons[buttonID].instanceInfo.name2));
 		end
 
 		-- instance description
-		if buttons[buttonID].instance[description] and buttons[buttonID].instance[description]~="" then
+		if buttons[buttonID].instanceInfo.description and buttons[buttonID].instanceInfo.description~="" then
 			GameTooltip:AddLine(" ");
-			GameTooltip:AddLine(buttons[buttonID].instance[description],1,1,1,1);
+			GameTooltip:AddLine(buttons[buttonID].instanceInfo.description,1,1,1,1);
 		end
 
 		-- instance encounter list
@@ -199,7 +236,7 @@ local function buttonHook_OnEnter(self)
 			GameTooltip:AddLine(" ");
 			for i=1, #bosses do
 				local boss, _, isKilled = GetLFGDungeonEncounterInfo(buttons[buttonID].instanceID,bosses[i]);
-				local n = (buttons[buttonID].instance[name2] or buttons[buttonID].instance[name]).."-"..buttons[buttonID].instance[difficulty];
+				local n = (buttons[buttonID].instanceInfo.name2 or buttons[buttonID].instanceInfo.name).."-"..buttons[buttonID].instanceInfo.difficulty;
 				if not isKilled and killedEncounter[n] and killedEncounter[n][boss] then
 					isKilled = true;
 				end
@@ -215,116 +252,108 @@ local function buttonHook_OnLeave()
 	GameTooltip:Hide();
 end
 
-local function OnGossipShow()
-	wipe(buttons); wipe(iconTexCoords);
-	local id,_ = UnitGUID("npc");
-	if id then
-		_,_,_,_,_,id = strsplit('-',id);
-		id = tonumber(id);
+GossipFrame:HookScript("OnShow",function()
+	wipe(buttons);
+	wipe(iconTexCoords);
+	UpdateNpcID();
+	if not (NPC_ID and ns.npcID[NPC_ID]) then
+		return
 	end
-	if id and ns.npcID[id] and not IsControlKeyDown() then
-		ScanSavedInstances();
-		NPC_ID = id;
-		local Buttons,isImmersion = {},false;
-		if ImmersionFrame then
-			Buttons = ImmersionFrame.TitleButtons.Buttons;
-			isImmersion = true;
-		elseif GossipFrame.buttons then
-			Buttons = GossipFrame.buttons;
+	ScanSavedInstances();
+end);
+
+GossipFrame:HookScript("OnHide",function()
+	for icon, texCoord in pairs(iconTexCoords)do
+		icon:SetTexCoord(unpack(texCoord));
+		iconTexCoords[icon]=nil;
+	end
+end);
+
+hooksecurefunc(GossipOptionButtonMixin,"Setup",function(self)
+	if not self.GetElementData then return end
+	local element = self:GetElementData();
+	local buttonID, instanceID = element.index;
+	if ns.gossip2instance[NPC_ID] and #ns.gossip2instance[NPC_ID]>0 then
+		instanceID = ns.gossip2instance[NPC_ID][buttonID];
+	end
+	if instanceID then
+		local data = GetInstanceDataByID(instanceID);
+		local showID = "";
+		if false then
+			showID = " " .. C("blue","("..instanceID..")");
 		end
-		for i,button in ipairs(Buttons)do
-			if button:IsShown() and button.type=="Gossip" then
-				local buttonID = button:GetID()
-				local instanceID
-				if ns.gossip2instance[NPC_ID] and #ns.gossip2instance[NPC_ID]>0 then
-					instanceID = ns.gossip2instance[NPC_ID][buttonID];
+		-- gossip text replacement
+		self:SetText(
+			data.instanceInfo.name..showID.."\n"..
+			"|Tinterface\\lfgframe\\ui-lfg-icon-heroic:12:12:0:0:32:32:0:16:0:16|t "..C("dkred",_G["GENERIC_FRACTION_STRING"]:format(data.numEncounters[1],data.numEncounters[2])).. " || ".. C("dkgray",data.instanceInfo.name2)
+		);
+		-- gossip icon replacement
+		iconTexCoords[self.Icon] = {self.Icon:GetTexCoord()};
+		self.Icon:SetTexture("interface\\minimap\\raid");
+		self.Icon:SetTexCoord(0.20,0.80,0.20,0.80);
+		self:Resize();
+		buttons[buttonID] = data;
+		if not hookedButton["button"..buttonID] then
+			self:HookScript("OnEnter",buttonHook_OnEnter);
+			self:HookScript("OnLeave",buttonHook_OnLeave);
+			hookedButton["button"..buttonID] = true;
+		end
+	end
+end)
+
+local function OnImmersionShow()
+	wipe(buttons);
+	wipe(iconTexCoords);
+	UpdateNpcID();
+	if not (NPC_ID and ns.npcID[NPC_ID] and not IsControlKeyDown()) then
+		return;
+	end
+	ScanSavedInstances();
+	local updated,instanceID,buttonID = false;
+	for i,button in ipairs(ImmersionFrame.TitleButtons.Buttons)do
+		updated,instanceID,buttonID = false;
+		if button:IsShown() and button.type=="Gossip" then
+			buttonID = button.idx;
+			if ns.gossip2instance[NPC_ID] and #ns.gossip2instance[NPC_ID]>0 then
+				instanceID = ns.gossip2instance[NPC_ID][buttonID];
+			end
+			if instanceID then
+				local data = GetInstanceDataByID(instanceID)
+				-- gossip text replacement
+				local showID = "";
+				if false then -- TODO: Add db option to show instance id
+					showID = " " .. C("ltblue","("..buttons[buttonID].instanceID..")");
 				end
-				if id and instanceID then
-					local data = {
-						groupName = false,
-						instanceID = instanceID,
-						instance = {GetLFGDungeonInfo(instanceID)},
-						numEncounters = {0,0},
-						encounters = {}
-					};
-					if data.instance[name]~=data.instance[name2] then
-						data.groupName = data.instance[name2];
-					end
-					local bossIndexes = {};
-					if ns.instance2bosses[instanceID] then
-						bossIndexes = ns.instance2bosses[instanceID];
-						data.numEncounters[2] = #ns.instance2bosses[instanceID];
-					else
-						data.numEncounters[2] = GetLFGDungeonNumEncounters(instanceID);
-						for i=1, data.numEncounters[2] do
-							tinsert(bossIndexes,i);
-						end
-					end
-					for _,i in ipairs(bossIndexes) do
-						local boss, _, isKilled = GetLFGDungeonEncounterInfo(instanceID,i);
-						local n = (data.instance[name2] or data.instance[name]).."-"..data.instance[difficulty];
-						if not isKilled and killedEncounter[n] and killedEncounter[n][boss] then
-							isKilled = true;
-						end
-						if isKilled then
-							data.numEncounters[1] = data.numEncounters[1] + 1;
-							tinsert(data.encounters,boss);
-						end
-					end
-					local showID = "";
-					if false then
-						showID = " " .. C("blue","("..instanceID..")");
-					end
-					if isImmersion then
-						-- gossip text replacement
-						button:SetText(
-							data.instance[name] ..showID.."\n"..
-							C("ltgray",data.instance[name2]) .."\n"..
-							"|Tinterface\\lfgframe\\ui-lfg-icon-heroic:12:12:0:0:32:32:0:16:0:16|t "..C("ltred",_G.GENERIC_FRACTION_STRING:format(data.numEncounters[1],data.numEncounters[2]))
-						);
-						-- gossip icon replacement
-						iconTexCoords[button.Icon] = {button.Icon:GetTexCoord()};
-						button.Icon:SetTexture("interface\\minimap\\raid");
-						button.Icon:SetTexCoord(0.20,0.80,0.20,0.80);
-					else -- GossipFrame
-						-- gossip text replacement
-						button:SetText(
-							data.instance[name]..showID.."\n"..
-							"|Tinterface\\lfgframe\\ui-lfg-icon-heroic:12:12:0:0:32:32:0:16:0:16|t "..C("dkred",_G.GENERIC_FRACTION_STRING:format(data.numEncounters[1],data.numEncounters[2])).. " || ".. C("dkgray",data.instance[name2])
-						);
-						-- gossip icon replacement
-						iconTexCoords[button.Icon] = {button.Icon:GetTexCoord()};
-						button.Icon:SetTexture("interface\\minimap\\raid");
-						button.Icon:SetTexCoord(0.20,0.80,0.20,0.80);
-						button:Resize();
-					end
-					if not hookedButton["button"..buttonID] then
-						button:HookScript("OnEnter",buttonHook_OnEnter);
-						button:HookScript("OnLeave",buttonHook_OnLeave);
-						hookedButton["button"..buttonID] = true;
-					end
-					buttons[buttonID] = data;
+				button:SetText(
+					data.instanceInfo.name ..showID.."\n"..
+					C("ltgray",data.instanceInfo.name2) .."\n"..
+					"|Tinterface\\lfgframe\\ui-lfg-icon-heroic:12:12:0:0:32:32:0:16:0:16|t "..C("ltred",_G["GENERIC_FRACTION_STRING"]:format(data.numEncounters[1],data.numEncounters[2]))
+				);
+				-- gossip icon replacement
+				iconTexCoords[button.Icon] = {button.Icon:GetTexCoord()};
+				button.Icon:SetTexture("interface\\minimap\\raid");
+				button.Icon:SetTexCoord(0.20,0.80,0.20,0.80);
+				if not hookedButton["button"..buttonID] then
+					button:HookScript("OnEnter",buttonHook_OnEnter);
+					button:HookScript("OnLeave",buttonHook_OnLeave);
+					hookedButton["button"..buttonID] = true;
 				end
+				buttons[buttonID] = data;
 			end
 		end
 	end
 end
 
-hooksecurefunc(GossipFrame,"Update",OnGossipShow); -- since dragonflight
+local function ImmersionFrame_GossipShow()
+	C_Timer.After(0.1,OnImmersionShow);
+end
 
-local function OnGossipHide()
+local function ImmersionFrame_OnHide()
 	for icon, texCoord in pairs(iconTexCoords)do
 		icon:SetTexCoord(unpack(texCoord));
 		iconTexCoords[icon]=nil;
 	end
 end
-
-GossipFrame:HookScript("OnHide",OnGossipHide);
-
-local function ImmersionFrame_GossipShow()
-	C_Timer.After(0.1,OnGossipShow);
-end
-
 
 ----------------------------------------------------
 -- create into tooltip for raids
@@ -467,11 +496,12 @@ local function updateOptions()
 				desc = {
 					type = "description", order = 1, fontSize = "medium",
 					name =
-						C("dkyellow",NAME..CHAT_HEADER_SUFFIX) .. L["NPC"..npc[1]]
+						C("dkyellow",NAME..CHAT_HEADER_SUFFIX) .. (npc[1]==0 and L["Currently unknown"] or L["NPC"..npc[1]])
 						.. "|n" ..
-						C("dkyellow",ZONE..CHAT_HEADER_SUFFIX) .. npc.zoneName
+						C("dkyellow",ZONE..CHAT_HEADER_SUFFIX) .. (npc[3]==false and L["Somewhere in"].." "..npc.zoneName.."?" or npc.zoneName)
+
 						.. "|n" ..
-						C("dkyellow",L["Coordinates"]..CHAT_HEADER_SUFFIX) .. npc[3].." "..npc[4],
+						(npc[3] and C("dkyellow",L["Coordinates"]..CHAT_HEADER_SUFFIX) .. npc[3].." "..npc[4] or ""),
 				}
 			}
 		}
@@ -535,8 +565,13 @@ local function RegisterDataBroker()
 			tt:AddLine(L[addon]);
 			for _,npc in ipairs(ns.npcs) do
 				tt:AddLine(" ");
-				tt:AddLine(L["NPC"..npc[1]]..C("mage"," (".. _G["EXPANSION_NAME"..npc[5]]..")"),.3,1,.3);
-				tt:AddLine(npc.zoneName..", "..npc[3]..", "..npc[4],.7,.7,.7);
+				if npc[3] then
+					tt:AddLine(L["NPC"..npc[1]]..C("mage"," (".. _G["EXPANSION_NAME"..npc[5]]..")"),.3,1,.3);
+					tt:AddLine(npc.zoneName..", "..npc[3]..", "..npc[4],.7,.7,.7);
+				else
+					tt:AddLine(L["Currently unknown"]..C("mage"," (".. _G["EXPANSION_NAME"..npc[5]]..")"),.3,1,.3);
+					tt:AddLine(L["Somewhere in"].." "..npc.zoneName.."?",.7,.7,.7)
+				end
 			end
 			tt:AddLine(" ");
 			tt:AddLine(C("copper",L["Click"]).." || "..C("green",L["Open LFR [of the past] info panel"]));
@@ -577,7 +612,7 @@ frame:SetScript("OnEvent",function(self,event,...)
 		elseif (...=="Immersion" or ImmersionFrame) and not immersionHook then
 			immersionHook = true;
 			hooksecurefunc(ImmersionFrame,"GOSSIP_SHOW",ImmersionFrame_GossipShow);
-			ImmersionFrame:HookScript("OnHide",OnGossipHide);
+			ImmersionFrame:HookScript("OnHide",ImmersionFrame_OnHide);
 		end
 	elseif not ns.faction(true) and (event=="PLAYER_LOGIN" or event=="NEUTRAL_FACTION_SELECT_RESULT") then
 		RequestRaidInfo();
