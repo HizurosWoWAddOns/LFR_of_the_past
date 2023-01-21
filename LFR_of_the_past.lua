@@ -1,7 +1,4 @@
 
--- bosskill tracking das am mittwoch zurückgesetzt wird.
--- broker und optionpanel seite mit namen und orten wo die npcs zu finden sind.
-
 local addon, ns = ...;
 local L = ns.L;
 ns.debugMode = "@project-version@"=="@".."project-version".."@";
@@ -50,13 +47,6 @@ LC.colorset({
 	["unknown"]		= "ee0000",
 });
 
-local bossIs = {
-	--dead="|Tinterface/minimap/ObjectIconsAtlas: |t "..C("gray","%s"),
-	--alive="|Tinterface\\lfgframe\\ui-lfg-icon-heroic:12:12:0:0:32:32:0:16:0:16|t "..C("ltyellow","%s")
-	dead="|Tinterface/questtypeicons:18:18:0:0:128:64:108:126:18:36|t"..C("gray","%s"),
-	alive="|Tinterface/questtypeicons:18:18:0:0:128:64:0:18:36:54|t"..C("ltyellow","%s")
-}
-
 
 ------------------------------------------------
 -- GameTooltip to get localized names and other informations
@@ -64,7 +54,7 @@ local bossIs = {
 ns.scanTT = CreateFrame("GameTooltip",addon.."_ScanTT",UIParent,"GameTooltipTemplate");
 ns.scanTT:SetScale(0.0001); ns.scanTT:SetAlpha(0); ns.scanTT:Hide();
 -- unset script functions shipped by GameTooltipTemplate to prevent errors
-for _,v in ipairs({"OnLoad","OnHide","OnTooltipAddMoney","OnTooltipSetDefaultAnchor","OnTooltipCleared"})do ns.scanTT:SetScript(v,nil); end
+for _,v in ipairs({"OnLoad","OnHide","OnTooltipSetDefaultAnchor","OnTooltipCleared"})do ns.scanTT:SetScript(v,nil); end
 
 function ns.scanTT:GetStringRegions(dataFunction,...)
 	if type(self[dataFunction])~="function" then return false; end
@@ -76,7 +66,7 @@ function ns.scanTT:GetStringRegions(dataFunction,...)
 	local regions,strs = {ns.scanTT:GetRegions()},{};
 	for i=1,#regions do
 		if (regions[i]~=nil) and (regions[i]:GetObjectType()=="FontString") then
-			local str = (regions[i]:GetText() or ""):trim();
+			local str = strtrim(regions[i]:GetText() or "");
 			if str~="" then
 				tinsert(strs,str);
 			end
@@ -91,7 +81,7 @@ end
 ------------------------------------------------
 
 function ns.faction(isNeutral)
-	faction = (UnitFactionGroup("player") or "neutral"):lower();
+	local faction = (UnitFactionGroup("player") or "neutral"):lower();
 	if isNeutral then
 		return faction=="neutral";
 	end
@@ -111,13 +101,15 @@ end
 
 local function ScanSavedInstances()
 	for index=1, (GetNumSavedInstances()) do
-		local tmp, instanceName, _, instanceReset, instanceDifficulty, _, _, _, isRaid, _, difficultyName, numEncounters, encounterProgress = {}, GetSavedInstanceInfo(index);
+		local instanceName, _, instanceReset, instanceDifficulty, _, _, _, _, _, _, _, encounterProgress = GetSavedInstanceInfo(index);
 		if (instanceDifficulty==7 or instanceDifficulty==17) and encounterProgress>0 and instanceReset>0 then
 			local encounters,strs = {},ns.scanTT:GetStringRegions("SetInstanceLockEncountersComplete",index);
-			for i=2, #strs, 2 do
-				encounters[strs[i]] = strs[i+1]==BOSS_DEAD;
+			if strs then
+				for i=2, #strs, 2 do
+					encounters[strs[i]] = strs[i+1]==BOSS_DEAD;
+				end
+				killedEncounter[instanceName.."-"..instanceDifficulty] = encounters;
 			end
-			killedEncounter[instanceName.."-"..instanceDifficulty] = encounters;
 		end
 	end
 	UpdateInstanceInfoLock = false;
@@ -125,8 +117,8 @@ end
 
 local function GetEncounterStatus(instanceID)
 	local encounter,num = {},GetLFGDungeonNumEncounters(instanceID);
-	local instanceInfo = {GetLFGDungeonInfo(instanceID)};
-	local instanceTag = instanceInfo[name2].."-"..instanceInfo[difficulty];
+	local _, _, _, _, _, _, _, _, _, _, _, difficulty, _, _, _, _, _, _, name2 = GetLFGDungeonInfo(instanceID);
+	local instanceTag = name2.."-"..difficulty;
 	for i=1, num do
 		local boss, _, isKilled = GetLFGDungeonEncounterInfo(instanceID,i);
 		if not isKilled and killedEncounter[instanceTag] and killedEncounter[instanceTag][boss] then
@@ -143,7 +135,7 @@ local InstanceGroups = setmetatable({},{
 		if not instanceGroupsBuild then -- build group list
 			local current;
 			for i=1, #ns.lfrID do
-				local name, typeID, subtypeID, minLevel, maxLevel, recLevel, minRecLevel, maxRecLevel, expansionLevel, groupID, textureFilename, difficulty, maxPlayers, description, isHoliday, bonusRepAmount, minPlayers, isTimeWalker, name2, minGearLevel = GetLFGDungeonInfo(ns.lfrID[i])
+				local name, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, name2 = GetLFGDungeonInfo(ns.lfrID[i])
 				if not rawget(t,name2) then
 					rawset(t,name2,{});
 					if name2==k then
@@ -174,7 +166,7 @@ local function buttonHook_OnEnter(self)
 		end
 
 		local showID = "";
-		if false then
+		if false then -- TODO: Add db option to show instance id
 			showID = " " .. C("ltblue","("..buttons[buttonID].instanceID..")");
 		end
 
@@ -220,7 +212,6 @@ local function buttonHook_OnEnter(self)
 end
 
 local function buttonHook_OnLeave()
-	if not NPC_ID then return end
 	GameTooltip:Hide();
 end
 
@@ -319,7 +310,7 @@ local function OnGossipShow()
 	end
 end
 
-hooksecurefunc("GossipFrameUpdate",OnGossipShow)
+hooksecurefunc(GossipFrame,"Update",OnGossipShow); -- since dragonflight
 
 local function OnGossipHide()
 	for icon, texCoord in pairs(iconTexCoords)do
@@ -452,13 +443,9 @@ local function RegisterOptions()
 
 	db = LibStub("AceDB-3.0"):New("LFRotp_Options",dbDefaults,true);
 
-	--options.args.profiles = LibStub("AceDBOptions-3.0"):GetOptionsTable(db);
-	--options.args.profiles.order=-1;
-
 	LibStub("AceConfig-3.0"):RegisterOptionsTable(L[addon], options);
 	local opts = LibStub("AceConfigDialog-3.0"):AddToBlizOptions(L[addon]);
 	LibStub("HizurosSharedTools").BlizzOptions_ExpandOnShow(opts);
-
 	LibStub("HizurosSharedTools").AddCredit(L[addon]); -- options.args.credits.args
 end
 
@@ -572,10 +559,6 @@ local immersionHook,frame = false,CreateFrame("frame");
 frame:SetScript("OnEvent",function(self,event,...)
 	if event=="ADDON_LOADED" then
 		if addon==... then
-			--self:UnregisterEvent("ADDON_LOADED");
-
-			character = (UnitName("player")).."-"..realm;
-
 			if LFRotp_Options==nil then
 				LFRotp_Options = {};
 			end
@@ -597,7 +580,6 @@ frame:SetScript("OnEvent",function(self,event,...)
 		ns.load_data();
 		updateOptions();
 	elseif event=="BOSS_KILL" then
-		local encounterID,name = ...;
 		BossKillQueryUpdate=true;
 		C_Timer.After(0.16,RequestRaidInfoUpdate);
 	elseif event=="UPDATE_INSTANCE_INFO" then
@@ -606,39 +588,6 @@ frame:SetScript("OnEvent",function(self,event,...)
 			UpdateInstanceInfoLock = true;
 			C_Timer.After(0.3,ScanSavedInstances);
 		end
-	elseif event=="RAID_INSTANCE_WELCOME" then
-		local dungeonName,lockExpireTime,locked,extended = ...;
-		currentInstance.name = dungeonName;
-		currentInstance.parts = false;
-		currentInstance.isLFR = false;
-		if dungeonName:find(PLAYER_DIFFICULTY3) then
-			for k,v in pairs(InstanceGroups)do
-				if dungeonName:find("^"..k) then
-					currentInstance.parts = v;
-					break;
-				end
-			end
-			currentInstance.isLFR = true;
-		end
---@do-not-package@
-		--[[
-		local pattern;
-		local instance,timeout = msg:match(pat.RAID_INSTANCE_WELCOME);
-		if not instance then
-			instance,timeout = msg:match(pat.RAID_INSTANCE_WELCOME_LOCKED);
-			pattern = "RAID_INSTANCE_WELCOME_LOCKED";
-		else
-			pattern = "RAID_INSTANCE_WELCOME";
-		end
-		if instance then
-			ns:debug(pattern,instance,timeout);
-		end
-		--]]
-		--  Willkommen in der Instanz "Terrasse des Endlosen Frühlings (Schlachtzugsbrowser)". Instanzzuordnungen laufen in 1 |4Tag:Tage; 20 |4Stunde:Stunden; aus.
-		-- RAID_INSTANCE_WELCOME Willkommen in der Instanz "%s". Instanzzuordnungen laufen in %s aus. [Blizzard]
-		-- RAID_INSTANCE_WELCOME_LOCKED Willkommen in der Instanz "%s". Eure Instanzzuordnung läuft in %s aus. [Blizzard]
-		-- PLAYER_DIFFICULTY3
---@end-do-not-package@
 	end
 end);
 
@@ -648,5 +597,3 @@ frame:RegisterEvent("NEUTRAL_FACTION_SELECT_RESULT");
 frame:RegisterEvent("BOSS_KILL");
 frame:RegisterEvent("UPDATE_INSTANCE_INFO");
 frame:RegisterEvent("RAID_INSTANCE_WELCOME");
-
--- function XXXXXX(id) local num = GetLFGDungeonNumEncounters(id); for i=1, num do local boss, _, isKilled = GetLFGDungeonEncounterInfo(id,i); print(id,i,boss); end end
