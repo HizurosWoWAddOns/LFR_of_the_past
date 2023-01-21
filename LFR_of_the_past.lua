@@ -336,7 +336,11 @@ local function CreateEncounterTooltip(parent)
 		local data = InstanceGroups[instanceName];
 		if data then
 			GameTooltip:SetOwner(parent,"ANCHOR_NONE");
-			GameTooltip:SetPoint("TOP",parent,"BOTTOM");
+			local point,relPoint,y,rectLeft,rectBottom = "TOP","BOTTOM",-5,parent:GetRect();
+			if GetScreenHeight()/2>rectBottom then
+				point,relPoint,y = "BOTTOM","TOP",5
+			end
+			GameTooltip:SetPoint(point,parent,relPoint,0,y);
 			GameTooltip:SetText(instanceName);
 			GameTooltip:AddLine(difficultyName,1,1,1);
 
