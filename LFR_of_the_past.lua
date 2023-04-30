@@ -2,7 +2,8 @@
 local addon, ns = ...;
 local L = ns.L;
 ns.debugMode = "@project-version@"=="@".."project-version".."@";
-LibStub("HizurosSharedTools").RegisterPrint(ns,addon,"LFRotp");
+local HST = LibStub("HizurosSharedTools")
+HST.RegisterPrint(ns,addon,"LFRotp");
 
 local ACD = LibStub("AceConfigDialog-3.0");
 local LDB = LibStub("LibDataBroker-1.1");
@@ -41,8 +42,10 @@ LC.colorset({
 	["unknown"]		= "ee0000",
 });
 local skull = "|T337496:12:12:0:0:32:32:0:16:0:16|t ";
-local GossipTextPattern = "%s\n"..skull..C("dkred",_G["GENERIC_FRACTION_STRING"]).." || "..C("dkgray","%s");
-local ImmersionTextPattern = "%s\n"..C("gray","%s").."\n"..skull..C("ltred2",_G["GENERIC_FRACTION_STRING"]);
+local GossipTextPattern = "%s\n"..skull..C("dkred","%d/%d");
+local GossipRaidWingPattern = GossipTextPattern.." "..C("dkgray","|| %s")
+local ImmersionTextPattern = "%s\n"..skull..C("ltred2","%d/%d");
+local ImmersionRaidWingPattern = "%1$s\n"..C("gray","%4$s").."\n"..skull..C("ltred2","%2$d/%3$d");
 
 
 ------------------------------------------------
@@ -107,7 +110,7 @@ local function GetInstanceDataByID(instanceID)
 		bossIndexes = ns.instance2bosses[instanceID];
 		data.numEncounters[2] = #ns.instance2bosses[instanceID];
 	else
-		data.numEncounters[2] = GetLFGDungeonNumEncounters(instanceID);
+		data.numEncounters[2] = GetLFGDungeonNumEncounters(instanceID) or 0;
 		for i=1, data.numEncounters[2] do
 			tinsert(bossIndexes,i);
 		end
@@ -196,12 +199,39 @@ local InstanceGroups = setmetatable({},{
 --- GossipFrame entries
 
 local function buttonHook_OnEnter(self)
-	if not (NPC_ID and self.GetElementData and ns.gossip2instance[NPC_ID] and #ns.gossip2instance[NPC_ID]>0) then return end
-	local data = GetInstanceDataByID(ns.gossip2instance[NPC_ID][self.GetElementData().index] or 0);
+	if not (NPC_ID and ns.gossip2instance[NPC_ID]) then return end
+	local data
+	if ImmersionFrame then
+		data = self.data;
+	elseif self.GetElementData then
+		local option = self.GetElementData()
+		if option.info and option.info.instanceID then
+			data = GetInstanceDataByID(option.info.instanceID);
+		elseif ns.gossip2instance[NPC_ID] and ns.gossip2instance[NPC_ID][option.info.gossipOptionID] then
+			data = GetInstanceDataByID(ns.gossip2instance[NPC_ID][option.info.gossipOptionID]);
+		else
+			data = GetInstanceDataByID(option.index);
+		end
+	end
 	if not data then
 		return
 	end
+	-- prepare instance encounter list
+	local bosses = {};
+	if ns.instance2bosses[data.instanceID] then
+		bosses = ns.instance2bosses[data.instanceID];
+	else
+		local numBosses = GetLFGDungeonNumEncounters(data.instanceID) or 0;
+		for i=1, numBosses do
+			tinsert(bosses,i);
+		end
+	end
 
+	if data.instanceInfo.description=="" and #bosses==0 then
+		return; -- don't display tooltip without more than the title (instance name)
+	end
+
+	-- set anchoring and ownership of the tooltip
 	GameTooltip:SetOwner(self,"ANCHOR_NONE");
 	if ImmersionFrame then
 		GameTooltip:SetPoint("RIGHT",self,"LEFT",-4,0)
@@ -218,7 +248,8 @@ local function buttonHook_OnEnter(self)
 	GameTooltip:AddLine(data.instanceInfo.name.. showID);
 
 	-- instance group name (for raids splitted into multible lfr instances)
-	if not ns.noSubtitle[NPC_ID] and data.instanceInfo.name~=data.instanceInfo.name2 then
+	local noSubtitle = (type(ns.noSubtitle[NPC_ID])=="table" and ns.noSubtitle[NPC_ID][data.instanceID]==true) or ns.noSubtitle[NPC_ID]==true;
+	if (not noSubtitle) and data.instanceInfo.name~=data.instanceInfo.name2 then
 		GameTooltip:AddLine(C("gray",data.instanceInfo.name2));
 	end
 
@@ -229,16 +260,6 @@ local function buttonHook_OnEnter(self)
 	end
 
 	-- instance encounter list
-	local bosses = {};
-	if ns.instance2bosses[data.instanceID] then
-		bosses = ns.instance2bosses[data.instanceID];
-	else
-		local numBosses = GetLFGDungeonNumEncounters(data.instanceID) or 0;
-		for i=1, numBosses do
-			tinsert(bosses,i);
-		end
-	end
-
 	if #bosses>0 then
 		GameTooltip:AddLine(" ");
 		for i=1, #bosses do
@@ -283,27 +304,39 @@ GossipFrame:HookScript("OnShow",function(self)
 
 	-- update options before layout gossip buttons; very smart. ;-) Thanks at fuba82.
 	for i,option in ipairs(GossipFrame.gossipOptions) do
-		local data;
-		if ns.gossip2instance[NPC_ID] and #ns.gossip2instance[NPC_ID]>0 and ns.gossip2instance[NPC_ID][option.orderIndex+1] then
-			data = GetInstanceDataByID(ns.gossip2instance[NPC_ID][option.orderIndex+1] or 0);
+		local index,data;
+		if ns.gossip2instance[NPC_ID] and ns.gossip2instance[NPC_ID][option.gossipOptionID] then
+			index = option.gossipOptionID;
+		else
+			index = option.orderIndex + (ns.gossipOptionsOrderIndexOffset[NPC_ID] or 0);
+		end
+		if ns.gossip2instance[NPC_ID][index] then
+			data = GetInstanceDataByID(ns.gossip2instance[NPC_ID][index] or 0);
 		end
 		if data then
-			-- for debugging
-			local showID = ""
-			if false then
-				showID = " " .. C("blue","("..ns.gossip2instance[NPC_ID][option.orderIndex+1]..")");
-			end
+			option.nameOrig = option.name;
+			option.instanceID = ns.gossip2instance[NPC_ID][index];
 
-			-- replcae gossip icon (interface/minimap/raid)
+			local noSubtitle = (type(ns.noSubtitle[NPC_ID])=="table" and ns.noSubtitle[NPC_ID][option.instanceID]==true) or ns.noSubtitle[NPC_ID]==true;
+
+			-- replace gossip icon (interface/minimap/raid)
 			option.icon = 1502548;
 
 			-- replcae gossip text
-			option.name = GossipTextPattern:format(
-				data.instanceInfo.name..showID, -- instance wing name
-				data.numEncounters[1], -- encounters killed this week
-				data.numEncounters[2], -- number of encounters of the wing
-				data.instanceInfo.name2 -- raid name
-			);
+			if data.numEncounters[2]==0 then
+				option.name = data.instanceInfo.name; -- mostly for szenarios
+			else
+				local pattern = GossipTextPattern;
+				if (not noSubtitle) and data.instanceInfo.name~=data.instanceInfo.name2 then
+					pattern = GossipRaidWingPattern;
+				end
+				option.name = pattern:format(
+					data.instanceInfo.name, -- instance wing name
+					data.numEncounters[1], -- encounters killed this week
+					data.numEncounters[2], -- number of encounters of the wing
+					data.instanceInfo.name2
+				);
+			end
 		end
 	end
 end);
@@ -333,25 +366,34 @@ local function OnImmersionShow()
 			end
 			if instanceID then
 				local data = GetInstanceDataByID(instanceID)
+				button.data = data;
+				local noSubtitle = (type(ns.noSubtitle[NPC_ID])=="table" and ns.noSubtitle[NPC_ID][instanceID]==true) or ns.noSubtitle[NPC_ID]==true;
 				-- gossip text replacement
-				local showID = "";
-				if false then -- TODO: Add db option to show instance id
-					showID = " " .. C("ltblue","("..buttons[buttonID].instanceID..")");
+				if data.numEncounters[2]==0 then
+					button:SetText(data.instanceInfo.name)
+				else
+					local pattern = ImmersionTextPattern;
+					if (not noSubtitle) and data.instanceInfo.name~=data.instanceInfo.name2 then
+						pattern = ImmersionRaidWingPattern;
+					end
+					button:SetFormattedText(
+						pattern,
+						data.instanceInfo.name, -- name of instance wing
+						data.numEncounters[1], -- killed  encounters
+						data.numEncounters[2], -- number of encounters in this wing
+						data.instanceInfo.name2 -- raid name
+					)
 				end
-				button:SetFormattedText(
-					ImmersionTextPattern,
-					data.instanceInfo.name..showID, -- name of instance wing
-					data.instanceInfo.name2, -- raid name
-					data.numEncounters[1], -- killed  encounters
-					data.numEncounters[2] -- number of encounters in this wing
-				)
+
 				-- gossip icon replacement
 				iconTexCoords[button.Icon] = {button.Icon:GetTexCoord()};
 				button.Icon:SetTexture(1502548); -- interface\\minimap\\raid
 				button.Icon:SetTexCoord(0.20,0.80,0.20,0.80);
+
 				if not hookedButton["button"..buttonID] then
-					button:HookScript("OnEnter",buttonHook_OnEnter);
-					button:HookScript("OnLeave",buttonHook_OnLeave);
+					local fnc = (button:GetScript("OnEnter")==nil and "Set" or "Hook") .. "Script";
+					button[fnc](button,"OnEnter",buttonHook_OnEnter);
+					button[fnc](button,"OnLeave",buttonHook_OnLeave);
 					hookedButton["button"..buttonID] = true;
 				end
 				buttons[buttonID] = data;
@@ -494,8 +536,23 @@ local function RegisterOptions()
 
 	LibStub("AceConfig-3.0"):RegisterOptionsTable(L[addon], options);
 	local opts = LibStub("AceConfigDialog-3.0"):AddToBlizOptions(L[addon]);
-	LibStub("HizurosSharedTools").BlizzOptions_ExpandOnShow(opts);
-	LibStub("HizurosSharedTools").AddCredit(L[addon]); -- options.args.credits.args
+	HST.BlizzOptions_ExpandOnShow(opts);
+	HST.AddCredit(L[addon]); -- options.args.credits.args
+end
+
+local function createDescription(npc)
+	local coords
+	if npc[3] then
+		coords = C("dkyellow",L["Coordinates"]..CHAT_HEADER_SUFFIX) .. npc[3].." "..npc[4]
+	end
+	return {
+		type = "description", order = npc.order or 1, fontSize = "medium", width="double",
+		name = table.concat({
+			C("dkyellow",NAME..CHAT_HEADER_SUFFIX) .. (npc[1]==0 and L["Currently unknown"] or L["NPC"..npc[1]]),
+			C("dkyellow",ZONE..CHAT_HEADER_SUFFIX) .. (npc[3]==false and L["Somewhere in"].." "..npc.zoneName.."?" or npc.zoneName),
+			coords,
+		},"|n")
+	}
 end
 
 local function updateOptions()
@@ -505,58 +562,53 @@ local function updateOptions()
 
 	for i=1, #ns.npcs do
 		local npc = ns.npcs[i];
-		local opt = {
-			type = "group",order = 10+i;
-			name = _G["EXPANSION_NAME"..npc[5]],
-			args = {
-				desc = {
-					type = "description", order = 1, fontSize = "medium",
-					name =
-						C("dkyellow",NAME..CHAT_HEADER_SUFFIX) .. (npc[1]==0 and L["Currently unknown"] or L["NPC"..npc[1]])
-						.. "|n" ..
-						C("dkyellow",ZONE..CHAT_HEADER_SUFFIX) .. (npc[3]==false and L["Somewhere in"].." "..npc.zoneName.."?" or npc.zoneName)
-
-						.. "|n" ..
-						(npc[3] and C("dkyellow",L["Coordinates"]..CHAT_HEADER_SUFFIX) .. npc[3].." "..npc[4] or ""),
+		if npc.addTo then
+			options.args["entry"..npc.addTo].args["desc"..npc.order] = createDescription(npc)
+		else
+			local opt = {
+				type = "group",order = 10+i;
+				name = _G["EXPANSION_NAME"..npc[5]],
+				args = {
+					desc = createDescription(npc)
 				}
 			}
-		}
-		if npc[3] and npc[4] then
-			if TomTom then
-				opt.args.tomtom = {
-					type = "execute", order = 2,
-					name = L["TomTomAdd"],
-					func = function()
-						if not (npc and TomTom.AddWaypoint) then return end
-						TomTom:AddWaypoint(npc[2],npc[3]/100,npc[4]/100,{
-							title = L["NPC"..npc[1]],
-							from = addon,
-							persistent = nil,
-							minimap = true,
-							world = true
-						});
-						-- Thanks @ fuba82@github for reminding me. i've forgot to add this function content. :-)
-					end
-				}
-			else
-				opt.args.tomtom = {
-					type = "description", order = 2,
-					name = C("orange",L["TomTomMissing"])
-				}
+			if npc[3] and npc[4] then
+				if TomTom then
+					opt.args.tomtom = {
+						type = "execute", order = 9,
+						name = L["TomTomAdd"],
+						func = function()
+							if not (npc and TomTom.AddWaypoint) then return end
+							TomTom:AddWaypoint(npc[2],npc[3]/100,npc[4]/100,{
+								title = L["NPC"..npc[1]],
+								from = addon,
+								persistent = nil,
+								minimap = true,
+								world = true
+							});
+							-- Thanks @ fuba82@github for reminding me. i've forgot to add this function content. :-)
+						end
+					}
+				else
+					opt.args.tomtom = {
+						type = "description", order = 2,
+						name = C("orange",L["TomTomMissing"])
+					}
+				end
 			end
-		end
-		if npc.imgs then
-			opt.args["pics_spacer"] = {
-				type="description", order = 10, name= " "
-			}
-			for I=1, #npc.imgs do
-				opt.args["pic"..I] = {
-					type = "description", order = 10+I, width = "normal", name = "",
-					image = imgPath..npc.imgs[I]:format(faction), imageWidth = imgSize, imageHeight = imgSize
+			if npc.imgs then
+				opt.args["pics_spacer"] = {
+					type="description", order = 10, name= " "
 				}
+				for I=1, #npc.imgs do
+					opt.args["pic"..I] = {
+						type = "description", order = 10+I, width = "normal", name = "",
+						image = imgPath..npc.imgs[I]:format(faction), imageWidth = imgSize, imageHeight = imgSize
+					}
+				end
 			end
+			options.args["entry"..i] = opt;
 		end
-		options.args["entry"..i] = opt;
 	end
 end
 
