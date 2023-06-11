@@ -356,13 +356,18 @@ local function OnImmersionShow()
 		return;
 	end
 	ScanSavedInstances();
-	local updated,instanceID,buttonID = false;
+	local updated,instanceID,buttonID,gossipOptionID = false;
 	for i,button in ipairs(ImmersionFrame.TitleButtons.Buttons)do
-		updated,instanceID,buttonID = false;
+		updated,instanceID,buttonID,gossipOptionID = false;
 		if button:IsShown() and button.type=="Gossip" then
-			buttonID = button.idx;
-			if ns.gossip2instance[NPC_ID] and #ns.gossip2instance[NPC_ID]>0 then
-				instanceID = ns.gossip2instance[NPC_ID][buttonID];
+			buttonID = button.idx
+			if button.gossipOptionID then
+				gossipOptionID = button.gossipOptionID
+			elseif ns.idx2gossipOptionID[NPC_ID] and #ns.idx2gossipOptionID[NPC_ID]>0 then
+				gossipOptionID = ns.idx2gossipOptionID[NPC_ID][buttonID]
+			end
+			if gossipOptionID then
+				instanceID = ns.gossip2instance[NPC_ID][gossipOptionID];
 			end
 			if instanceID then
 				local data = GetInstanceDataByID(instanceID)
