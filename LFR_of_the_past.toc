@@ -1,6 +1,7 @@
 ## Interface: 100100
 ## Title: LFR [of the past]
 ## Notes: Track encounter status of past lfr accessable by npc's like lore seeker han
+## IconTexture: 341547
 ## Author: Hizuro
 ## Version: @project-version@
 ## SavedVariables: LFRotp_Options, LFRotp_Dev
