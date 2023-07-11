@@ -551,13 +551,36 @@ local function createDescription(npc)
 		coords = C("dkyellow",L["Coordinates"]..CHAT_HEADER_SUFFIX) .. npc[3].." "..npc[4]
 	end
 	return {
-		type = "description", order = npc.order or 1, fontSize = "medium", width="double",
+		type = "description", order = 1, fontSize = "medium", width="double",
 		name = table.concat({
 			C("dkyellow",NAME..CHAT_HEADER_SUFFIX) .. (npc[1]==0 and L["Currently unknown"] or L["NPC"..npc[1]]),
 			C("dkyellow",ZONE..CHAT_HEADER_SUFFIX) .. (npc[3]==false and L["Somewhere in"].." "..npc.zoneName.."?" or npc.zoneName),
 			coords,
 		},"|n")
 	}
+end
+
+local function addTomTom(opt,npc)
+	local key = "tomtom";
+	opt.args[key] = {
+		type = "execute", order = 2,
+		name = L["TomTomAdd"],
+		func = function()
+			if not (npc and TomTom.AddWaypoint) then return end
+			TomTom:AddWaypoint(npc[2],npc[3]/100,npc[4]/100,{
+				title = L["NPC"..npc[1]],
+				from = addon,
+				persistent = nil,
+				minimap = true,
+				world = true
+			});
+			-- Thanks @ fuba82@github for reminding me. i've forgot to add this function content. :-)
+		end
+	}
+	if not (TomTom and TomTom.AddWaypoint) then
+		opt.args[key].name = L["TomTomMissing"];
+		opt.args[key].disabled = true;
+	end
 end
 
 local function updateOptions()
@@ -567,52 +590,112 @@ local function updateOptions()
 
 	for i=1, #ns.npcs do
 		local npc = ns.npcs[i];
-		if npc.addTo then
-			options.args["entry"..npc.addTo].args["desc"..npc.order] = createDescription(npc)
-		else
-			local opt = {
-				type = "group",order = 10+i;
-				name = _G["EXPANSION_NAME"..npc[5]],
-				args = {
-					desc = createDescription(npc)
+		if rawget(L,"NPC"..npc[1]) then
+			if npc.addTo then
+				local opt = {
+					type="group", order=npc.order+1, inline=true,
+					name="", --L["NPC"..npc[1]],
+					args = {
+						desc = createDescription(npc)
+					}
 				}
-			}
-			if npc[3] and npc[4] then
-				if TomTom then
-					opt.args.tomtom = {
-						type = "execute", order = 9,
-						name = L["TomTomAdd"],
-						func = function()
-							if not (npc and TomTom.AddWaypoint) then return end
-							TomTom:AddWaypoint(npc[2],npc[3]/100,npc[4]/100,{
-								title = L["NPC"..npc[1]],
-								from = addon,
-								persistent = nil,
-								minimap = true,
-								world = true
-							});
-							-- Thanks @ fuba82@github for reminding me. i've forgot to add this function content. :-)
+				if npc[3] and npc[4] then
+					addTomTom(opt,npc);
+				end
+				options.args["entry"..npc.addTo].args.location.args["npc"..npc.order] = opt;
+			else
+				local opt = {
+					type = "group",order = 10+i;
+					name = _G["EXPANSION_NAME"..npc[5]],
+					childGroups="tab",
+					args = {
+						location = {
+							type="group", order=1,
+							name=LOCATION_COLON:gsub(HEADER_COLON,""),
+							args= {
+								npc1 = {
+									type="group", order=2, inline=true,
+									name="", --L["NPC"..npc[1]],
+									args = {
+										desc = createDescription(npc)
+									}
+								}
+							}
+						},
+						info = {
+							type ="group", order = 2, hidden=true,
+							name = INFO,
+							args = {
+							}
+						}
+					}
+				}
+				if npc[3] and npc[4] then
+					addTomTom(opt.args.location.args.npc1,npc);
+				end
+				if npc.imgs then
+					opt.args["pics_spacer"] = {
+						type="description", order = 10, name= " "
+					}
+					for I=1, #npc.imgs do
+						opt.args.location.args["pic"..I] = {
+							type = "description", order = 10+I, width = "normal", name = "",
+							image = imgPath..npc.imgs[I]:format(faction), imageWidth = imgSize, imageHeight = imgSize
+						}
+					end
+				end
+				local order = 1;
+				for _,gossipOptionID in ipairs(ns.idx2gossipOptionID[npc[1]])do
+					-- gossip option order
+					local instanceID = ns.gossip2instance[npc[1]][gossipOptionID];
+					local instanceData = instanceID and GetInstanceDataByID(instanceID) or false;
+					if instanceData then
+						local entry = {
+							type = "group", order = order, inline=true,
+							name = instanceData.instanceInfo.name
+								.. (instanceData.groupName and C("ltgray"," ("..instanceData.groupName..")") or "")
+								--.. C("ltgray"," ("..instanceID..")")
+								,
+							args = {
+							}
+						}
+						--[[
+						if instanceData.groupName then
+							entry.args.instanceGroup = {
+								type = "description", order= 1, fontSize="medium",
+								name = C("ltgray",instanceData.groupName)
+							}
 						end
-					}
-				else
-					opt.args.tomtom = {
-						type = "description", order = 2,
-						name = C("orange",L["TomTomMissing"])
-					}
+						--]]
+						entry.args.desc = {
+							type = "description", order=2, fontSize="medium",
+							name = instanceData.instanceInfo.description
+						}
+						if ns.instance2bosses[instanceID] then
+							local encounters = GetEncounterStatus(instanceID);
+							local encounterEntries = {}
+							for _,encounterIndex in ipairs(ns.instance2bosses[instanceID])do
+								if encounters[encounterIndex] then
+									tinsert(encounterEntries,C(encounters[encounterIndex][2] and "red" or "green","   |Tinterface\\lfgframe\\lfg:14:14:0:0:64:32:0:32:0:32|t"..encounters[encounterIndex][1]));
+								else
+									--ns:debugPrint("missing data2",instanceID,encounterIndex)
+								end
+							end
+							entry.args.encounters = {
+								type = "description", order=2, fontSize="medium",
+								name = table.concat(encounterEntries,"|n")
+							}
+						else
+							--ns:debugPrint("missing data",instanceID);
+						end
+
+						opt.args.info.args["instance-"..instanceID] = entry;
+						opt.args.info.hidden=false;
+						order=order+1;
+					end
 				end
+				options.args["entry"..i] = opt;
 			end
-			if npc.imgs then
-				opt.args["pics_spacer"] = {
-					type="description", order = 10, name= " "
-				}
-				for I=1, #npc.imgs do
-					opt.args["pic"..I] = {
-						type = "description", order = 10+I, width = "normal", name = "",
-						image = imgPath..npc.imgs[I]:format(faction), imageWidth = imgSize, imageHeight = imgSize
-					}
-				end
-			end
-			options.args["entry"..i] = opt;
 		end
 	end
 end
