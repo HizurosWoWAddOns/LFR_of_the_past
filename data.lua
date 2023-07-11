@@ -31,7 +31,7 @@ function ns.load_data()
 		-- bfa
 		npc_bfa,
 		-- shadowlands
-		{0,1670,false,false,8,"LRF"},
+		{205959,1670,41.4,71.41,8,"LFR",imgs={"sl1","sl2"}},
 	};
 
 	ns.instance2bosses = {
@@ -60,7 +60,13 @@ function ns.load_data()
 		[2009]={1,3,2},[2010]={4,5,6},[2011]={7,8}, -- eternal palace
 		[2036]={1,3,2},[2037]={4,6,5,7},[2038]={8,9,10},[2039]={11,12}, -- ny'alotha
 		-- sl
-		--[2090]={2,3,4},[2091]={5,6,7},[2092]={1,8,9},[2096]={10}, -- castle nathria
+		--[2090]={2,3,4},[2091]={5,6,7},[2092]={1,8,9},[2096]={10},
+		[2090]={2,4,6},[2091]={3,5,7},[2092]={1,8,9},[2096]={10}, -- castle nathria
+		-- note: blizzard has changed Encounter interation for newer lfr. nice. what is with the older entries?
+		-- Sanctum of Domination 9.1.0
+		[2221]={1,2,3},[2222]={1,2,3},[2223]={1,2,3},[2224]={1,10},
+		-- Sepulcher of the First Ones 9.2.0
+		[2291]={1,2,3},[2292]={1,2,3,4},[2293]={1,2,3},[2294]={1},
 	};
 
 	-- hide subtitle for szenario and single wing lfr
@@ -85,7 +91,7 @@ function ns.load_data()
 		-- bfa
 		[177193] = false,
 		-- sl
-		--[] = 0,
+		[205959] = 0,
 	}
 
 	ns.gossip2instance = {
@@ -124,7 +130,11 @@ function ns.load_data()
 			[52316]=2036,[52317]=2037,[52318]=2038, -- ny'alotha
 		},
 		-- sl
-		--[] = {2090,2091,2092,2096},
+		[205959] = {
+			[110020]=2090,[110037]=2091,[110036]=2092,[110035]=2096, -- castle nathria 9.0
+			[110034]=2221,[110033]=2222,[110032]=2223,[110031]=2224, -- Sanctum of Domination 9.1.0
+			[110030]=2291,[110029]=2292,[110028]=2293,[110027]=2294, -- Sepulcher of the First Ones 9.2.0
+		},
 	};
 	ns.idx2gossipOptionID = {
 		[80675] = {42612,42613}, -- lfr
@@ -157,6 +167,11 @@ function ns.load_data()
 			52313,52314,52315, -- The Eternal Palace
 			52316,52317,52318, -- ny'alotha
 		},
+		[205959] = {
+			110020,110037,110036,110035, -- castle nathria
+			110034,110033,110032,110031, -- Sanctum of Domination 9.1.0
+			110030,110029,110028,110027, -- Sepulcher of the First Ones 9.2.0
+		},
 	}
 	if faction=="horde" then
 		ns.idx2gossipOptionID[78709][11]=42521
@@ -172,9 +187,8 @@ function ns.load_data()
 		849,850,851,847,846,848,823,982,983,984,985,986, -- wod
 		1287,1288,1289,1411,1290,1291,1292,1293,1494,1495,1496,1497,1610,1611,1612,1613, -- legion
 		1731,1732,1733, 1945,1946,1947, 1948,1949,1950, 1951, 2009,2010,2011, 2036,2037,2038, -- bfa
-		-- 2090,2091,2092,2096, -- sl
+		2090,2091,2092,2096,2221,2222,2223,2224,2291,2292,2293,2294, -- sl
 	}
-
 	wipe(ns.npcID);
 
 	for i=1, #ns.npcs do
