@@ -730,13 +730,15 @@ local function RegisterDataBroker()
 		OnTooltipShow = function(tt)
 			tt:AddLine(L[addon]);
 			for _,npc in ipairs(ns.npcs) do
-				tt:AddLine(" ");
-				if npc[3] then
-					tt:AddLine(L["NPC"..npc[1]]..C("mage"," (".. _G["EXPANSION_NAME"..npc[5]]..")"),.3,1,.3);
-					tt:AddLine(npc.zoneName..", "..npc[3]..", "..npc[4],.7,.7,.7);
-				else
-					tt:AddLine(L["Currently unknown"]..C("mage"," (".. _G["EXPANSION_NAME"..npc[5]]..")"),.3,1,.3);
-					tt:AddLine(L["Somewhere in"].." "..npc.zoneName.."?",.7,.7,.7)
+				if rawget(L,"NPC"..npc[1]) then
+					tt:AddLine(" ");
+					if npc[3] then
+						tt:AddLine(L["NPC"..npc[1]]..C("mage"," (".. _G["EXPANSION_NAME"..npc[5]]..")"),.3,1,.3);
+						tt:AddLine(npc.zoneName..", "..npc[3]..", "..npc[4],.7,.7,.7);
+					else
+						tt:AddLine(L["Currently unknown"]..C("mage"," (".. _G["EXPANSION_NAME"..npc[5]]..")"),.3,1,.3);
+						tt:AddLine(L["Somewhere in"].." "..npc.zoneName.."?",.7,.7,.7)
+					end
 				end
 			end
 			tt:AddLine(" ");
