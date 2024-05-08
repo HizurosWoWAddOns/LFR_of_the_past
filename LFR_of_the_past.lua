@@ -42,10 +42,17 @@ LC.colorset({
 	["unknown"]		= "ee0000",
 });
 local skull = "|T337496:12:12:0:0:32:32:0:16:0:16|t ";
-local GossipTextPattern = "%s\n"..skull..C("dkred","%d/%d");
-local GossipRaidWingPattern = GossipTextPattern.." "..C("dkgray","|| %s")
-local ImmersionTextPattern = "%s\n"..skull..C("ltred2","%d/%d");
-local ImmersionRaidWingPattern = "%1$s\n"..C("gray","%4$s").."\n"..skull..C("ltred2","%2$d/%3$d");
+local GossipTextPattern = {};
+do
+	local colors = {enemy="dkred",enemyClear="dkgreen",enemyDarkBG="ltred2",enemyClearDarkBG="green"}
+	for k,v in pairs(colors)do
+		GossipTextPattern[k] = "%s\n"..skull..C(v,"%d/%d");
+	end
+end
+GossipTextPattern.raidWing = " "..C("dkgray","|| %s");
+GossipTextPattern.raidWingDarkBG = " "..C("gray","|| %s");
+GossipTextPattern.raidWingImmersion = "%1$s\n"..C("gray","%4$s").."\n"..skull..C("ltred2","%2$d/%3$d");
+GossipTextPattern.raidWingImmersionClear = "%1$s\n"..C("gray","%4$s").."\n"..skull..C("green","%2$d/%3$d");
 
 
 ------------------------------------------------
@@ -326,9 +333,11 @@ GossipFrame:HookScript("OnShow",function(self)
 			if data.numEncounters[2]==0 then
 				option.name = data.instanceInfo.name; -- mostly for szenarios
 			else
-				local pattern = GossipTextPattern;
+				local dark = db.profile.darkBackground and "DarkBG" or "";
+				local clear = data.numEncounters[1]==data.numEncounters[2] and "Clear" or "";
+				local pattern = GossipTextPattern["enemy"..clear..dark];
 				if (not noSubtitle) and data.instanceInfo.name~=data.instanceInfo.name2 then
-					pattern = GossipRaidWingPattern;
+					pattern = pattern .. GossipTextPattern["raidWing"..dark];
 				end
 				option.name = pattern:format(
 					data.instanceInfo.name, -- instance wing name
@@ -377,9 +386,10 @@ local function OnImmersionShow()
 				if data.numEncounters[2]==0 then
 					button:SetText(data.instanceInfo.name)
 				else
-					local pattern = ImmersionTextPattern;
+					local clear = data.numEncounters[1]==data.numEncounters[2] and "Clear" or "";
+					local pattern = GossipTextPattern["enemy"..clear.."DarkBG"];
 					if (not noSubtitle) and data.instanceInfo.name~=data.instanceInfo.name2 then
-						pattern = ImmersionRaidWingPattern;
+						pattern = GossipTextPattern["raidWingImmersion"..clear];
 					end
 					button:SetFormattedText(
 						pattern,
@@ -479,6 +489,7 @@ local dbDefaults,options = {
 		minimap = {hide=false},
 		minimapButtonETT = false,
 		queueStatusFrameETT = true,
+		darkBackground = false,
 	}
 };
 
@@ -496,8 +507,18 @@ local function RegisterOptions()
 				type = "toggle", order = 2,
 				name = L["MinimapIcon"], desc = L["MinimapIconDesc"]
 			},
-			encounterTooltips = {
+			npcOptions = {
 				type = "group", order = 3, inline = true,
+				name = L["LFR NPCs"],
+				args = {
+					darkBackground = {
+						type = "toggle", order = 2,
+						name = L["DarkBackground"], desc = L["DarkBackgroundDesc"]
+					},
+				},
+			},
+			encounterTooltips = {
+				type = "group", order = 4, inline = true,
 				name = L["EncounterTooltip"],
 				args = {
 					minimapButtonETT = {
