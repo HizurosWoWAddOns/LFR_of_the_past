@@ -1,4 +1,4 @@
-## Interface: 100207
+## Interface: 110000
 ## Title: LFR [of the past]
 ## Notes: Track encounter status of past lfr accessable by npc's like lore seeker han
 ## IconTexture: 341547
