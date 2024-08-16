@@ -202,8 +202,8 @@ function ns.load_data()
 		local mapInfo = C_Map.GetMapInfo(ns.npcs[i][2]);
 		if mapInfo then
 			if mapInfo.name == DUNGEON_FLOOR_DALARANCITY1 then
-				local spell = GetSpellInfo(224869);
-				local _,target = strsplit(HEADER_COLON,spell,2);
+				local spell = C_Spell.GetSpellInfo(224869);
+				local _,target = strsplit(HEADER_COLON,spell.name,2);
 				if target then
 					mapInfo.name = target:trim(); -- replace "Dalaran" by "Dalaran - Broken Isles"
 				end
