@@ -61,13 +61,10 @@ function ns.load_data()
 		[2009]={1,3,2},[2010]={4,5,6},[2011]={7,8}, -- eternal palace
 		[2036]={1,3,2},[2037]={4,6,5,7},[2038]={8,9,10},[2039]={11,12}, -- ny'alotha
 		-- sl
-		--[2090]={2,3,4},[2091]={5,6,7},[2092]={1,8,9},[2096]={10},
 		[2090]={2,4,6},[2091]={3,5,7},[2092]={1,8,9},[2096]={10}, -- castle nathria
-		-- note: blizzard has changed Encounter interation for newer lfr. nice. what is with the older entries?
-		-- Sanctum of Domination 9.1.0
-		[2221]={1,2,3},[2222]={1,2,3},[2223]={1,2,3},[2224]={1},
-		-- Sepulcher of the First Ones 9.2.0
-		[2291]={1,2,3},[2292]={1,2,3,4},[2293]={1,2,3},[2294]={1},
+		[2221]={1,2,3},[2222]={1,2,3},[2223]={1,2,3},[2224]={1}, -- Sanctum of Domination 9.1.0
+		[2291]={1,2,3},[2292]={1,2,3,4},[2293]={1,2,3},[2294]={1}, -- Sepulcher of the First Ones 9.2.0
+		-- df
 	};
 
 	-- hide subtitle for szenario and single wing lfr
