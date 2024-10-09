@@ -206,7 +206,7 @@ local InstanceGroups = setmetatable({},{
 --- GossipFrame entries
 
 local function buttonHook_OnEnter(self)
-	if not (NPC_ID and ns.gossip2instance[NPC_ID]) then return end
+	if not (NPC_ID and ns.gossip2instance[NPC_ID] and db.profile.replaceOptions) then return end
 	local data
 	if ImmersionFrame then
 		data = self.data;
@@ -301,7 +301,7 @@ end);
 
 GossipFrame:HookScript("OnShow",function(self)
 	UpdateNpcID();
-	if not (NPC_ID and ns.npcID[NPC_ID] and GossipFrame.gossipOptions) then
+	if not (NPC_ID and ns.npcID[NPC_ID] and GossipFrame.gossipOptions and db.profile.replaceOptions) then
 		return
 	end
 
@@ -361,7 +361,7 @@ local function OnImmersionShow()
 	wipe(buttons);
 	wipe(iconTexCoords);
 	UpdateNpcID();
-	if not (NPC_ID and ns.npcID[NPC_ID] and not IsControlKeyDown()) then
+	if not (NPC_ID and ns.npcID[NPC_ID] and not IsControlKeyDown() and db.profile.replaceOptions) then
 		return;
 	end
 	ScanSavedInstances();
@@ -490,6 +490,7 @@ local dbDefaults,options = {
 		minimapButtonETT = false,
 		queueStatusFrameETT = true,
 		darkBackground = false,
+		replaceOptions = true,
 	}
 };
 
@@ -511,9 +512,16 @@ local function RegisterOptions()
 				type = "group", order = 3, inline = true,
 				name = L["LFR NPCs"],
 				args = {
+					replaceOptions = {
+						type = "toggle", order = 1,
+						name = L["Replace options"], desc = L["Replace text of option entries on lfr npcs"]
+					},
 					darkBackground = {
 						type = "toggle", order = 2,
-						name = L["DarkBackground"], desc = L["DarkBackgroundDesc"]
+						name = L["DarkBackground"], desc = L["DarkBackgroundDesc"],
+						disabled = function()
+							return not db.profile.replaceOptions
+						end
 					},
 				},
 			},
@@ -698,16 +706,12 @@ local function updateOptions()
 							for _,encounterIndex in ipairs(ns.instance2bosses[instanceID])do
 								if encounters[encounterIndex] then
 									tinsert(encounterEntries,C(encounters[encounterIndex][2] and "red" or "green","   |Tinterface\\lfgframe\\lfg:14:14:0:0:64:32:0:32:0:32|t"..encounters[encounterIndex][1]));
-								else
-									--ns:debugPrint("missing data2",instanceID,encounterIndex)
 								end
 							end
 							entry.args.encounters = {
 								type = "description", order=2, fontSize="medium",
 								name = table.concat(encounterEntries,"|n")
 							}
-						else
-							--ns:debugPrint("missing data",instanceID);
 						end
 
 						opt.args.info.args["instance-"..instanceID] = entry;
