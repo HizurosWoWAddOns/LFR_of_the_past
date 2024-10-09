@@ -5,11 +5,11 @@ ns.npcID = {};
 ns.npcs = {};
 
 function ns.load_data()
-	local faction = ns.faction(); --UnitFactionGroup("player")=="Alliance";
+	local Alliance = UnitFactionGroup("player")=="Alliance";
 	local npc_wod = {94870,582,33.2,37.2,5,"LFR",imgs={"wod1_%s","wod2_%s","wod3_%s"}};
 	local npc_bfa = {177193,1161,74.21,13.53,7,"LFR",imgs={"bfa1_%s","bfa2_%s","bfa3_%s"}};
 	local theramores_fall = 543;
-	if faction=="horde" then
+	if not Alliance then
 		npc_wod[2],npc_wod[3],npc_wod[4] = 590,41.5,47.0;
 		npc_bfa[1],npc_bfa[2],npc_bfa[3],npc_bfa[4] = 177208,1165,68.62,30.27;
 		theramores_fall = 542;
@@ -171,7 +171,7 @@ function ns.load_data()
 			110030,110029,110028,110027, -- Sepulcher of the First Ones 9.2.0
 		},
 	}
-	if faction=="horde" then
+	if not Alliance then
 		ns.idx2gossipOptionID[78709][11]=42521
 		-- dazar'alor (horde)
 		ns.idx2gossipOptionID[npc_bfa[1]][4]=52306
