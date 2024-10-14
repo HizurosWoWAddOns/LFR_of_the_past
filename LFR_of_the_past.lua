@@ -434,18 +434,20 @@ local function GetEncounterInfo(instanceID,encounters,encounterIndex)
 	return encounters[encounterIndex] or (ns.instance2bossesAlt[instanceID] and ns.instance2bossesAlt[instanceID][encounterIndex] and encounters[ns.instance2bossesAlt[instanceID][encounterIndex]]) or false;
 end
 
-local function CreateEncounterTooltip(parent)
+local function CreateEncounterTooltip(parent, append)
 	if --[[IsInstance() or]] IsInRaid() then
 		local instanceName, instanceType, difficultyID, difficultyName, maxPlayers, dynamicDifficulty, isDynamic, instanceMapID, instanceGroupSize = GetInstanceInfo()
 		if not (difficultyID==7 or difficultyID==17) then return end
 		local data = InstanceGroups[instanceName];
 		if data then
-			GameTooltip:SetOwner(parent,"ANCHOR_NONE");
-			local point,relPoint,y,rectLeft,rectBottom = "TOP","BOTTOM",-5,parent:GetRect();
-			if GetScreenHeight()/2>rectBottom then
-				point,relPoint,y = "BOTTOM","TOP",5
+			if not append then
+				GameTooltip:SetOwner(parent,"ANCHOR_NONE");
+				local point,relPoint,y,rectLeft,rectBottom = "TOP","BOTTOM",-5,parent:GetRect();
+				if GetScreenHeight()/2>rectBottom then
+					point,relPoint,y = "BOTTOM","TOP",5
+				end
+				GameTooltip:SetPoint(point,parent,relPoint,0,y);
 			end
-			GameTooltip:SetPoint(point,parent,relPoint,0,y);
 			GameTooltip:SetText(instanceName);
 			GameTooltip:AddLine(difficultyName,1,1,1);
 
@@ -476,6 +478,9 @@ local function CreateEncounterTooltip(parent)
 			end
 
 			GameTooltip:Show();
+			if append then
+				return true;
+			end
 		end
 	end
 end
@@ -765,6 +770,10 @@ local function RegisterDataBroker()
 		label		= L[addon],
 		text		= L[addon],
 		OnTooltipShow = function(tt)
+			if db.profile.minimapButtonETT and CreateEncounterTooltip(tt,true) then
+				return;
+			end
+
 			tt:AddLine(L[addon]);
 			for _,npc in ipairs(ns.npcs) do
 				if rawget(L,"NPC"..npc[1]) then
@@ -780,10 +789,6 @@ local function RegisterDataBroker()
 			end
 			tt:AddLine(" ");
 			tt:AddLine(C("copper",L["Click"]).." || "..C("green",L["Open LFR [of the past] info panel"]));
-
-			if db.profile.minimapButtonETT then
-				CreateEncounterTooltip(tt);
-			end
 		end,
 		--OnEnter = LDBObject_OnEnter,
 		--OnLeave = LDBObject_OnLeave,
