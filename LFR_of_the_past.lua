@@ -430,6 +430,9 @@ end
 
 ----------------------------------------------------
 -- create into tooltip for raids
+local function GetEncounterInfo(instanceID,encounters,encounterIndex)
+	return encounters[encounterIndex] or (ns.instance2bossesAlt[instanceID] and ns.instance2bossesAlt[instanceID][encounterIndex] and encounters[ns.instance2bossesAlt[instanceID][encounterIndex]]) or false;
+end
 
 local function CreateEncounterTooltip(parent)
 	if --[[IsInstance() or]] IsInRaid() then
@@ -452,15 +455,23 @@ local function CreateEncounterTooltip(parent)
 
 				local encounter = GetEncounterStatus(data[i][1]);
 				local i2b = ns.instance2bosses[data[i][1]];
-				local more = IsControlKeyDown();
+				--local more = IsControlKeyDown();
+				local encList = i2b or encounter
+				for e=1, #encList do
+					local enc = GetEncounterInfo(data[i][1],encList,encList[b])
+				end
 				if i2b then -- lfr
 					for b=1, #i2b do
-						GameTooltip:AddDoubleLine("|Tinterface/questtypeicons:14:14:0:0:128:64:0:18:36:54|t "..encounter[i2b[b]][1],encounter[i2b[b]][2] and C("red",BOSS_DEAD) or C("green",BOSS_ALIVE));
+						local enc = GetEncounterInfo(data[i][1],encounter,i2b[b])
+						GameTooltip:AddDoubleLine("|Tinterface/questtypeicons:14:14:0:0:128:64:0:18:36:54|t "..enc[1],enc[2] and C("red",BOSS_DEAD) or C("green",BOSS_ALIVE));
 					end
 				else -- normal raid
 					for b=1, #encounter do
-						GameTooltip:AddDoubleLine("|Tinterface/questtypeicons:14:14:0:0:128:64:0:18:36:54|t "..encounter[b][1],encounter[b][2] and C("red",BOSS_DEAD) or C("green",BOSS_ALIVE));
+						local enc = GetEncounterInfo(data[i][1],encounter,b)
 					end
+				end
+				if enc then
+					GameTooltip:AddDoubleLine("|Tinterface/questtypeicons:14:14:0:0:128:64:0:18:36:54|t "..enc[1],enc[2] and C("red",BOSS_DEAD) or C("green",BOSS_ALIVE));
 				end
 			end
 
@@ -703,9 +714,10 @@ local function updateOptions()
 						if ns.instance2bosses[instanceID] then
 							local encounters = GetEncounterStatus(instanceID);
 							local encounterEntries = {}
-							for _,encounterIndex in ipairs(ns.instance2bosses[instanceID])do
-								if encounters[encounterIndex] then
-									tinsert(encounterEntries,C(encounters[encounterIndex][2] and "red" or "green","   |Tinterface\\lfgframe\\lfg:14:14:0:0:64:32:0:32:0:32|t"..encounters[encounterIndex][1]));
+							for index,encounterIndex in ipairs(ns.instance2bosses[instanceID])do
+								local enc = GetEncounterInfo(instanceID,encounters,encounterIndex)
+								if enc and enc[1] then
+									tinsert(encounterEntries,C(enc[2] and "red" or "green","   |Tinterface\\lfgframe\\lfg:14:14:0:0:64:32:0:32:0:32|t"..enc[1]));
 								end
 							end
 							entry.args.encounters = {
