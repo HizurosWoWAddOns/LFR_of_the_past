@@ -301,6 +301,12 @@ end);
 
 GossipFrame:HookScript("OnShow",function(self)
 	UpdateNpcID();
+--@do-not-package@
+	local isTimear = tostring(UnitName("MOUSEOVER")):match("Timear")~=nil
+	if db.profile.debugMode and isTimear then
+		ns:print("<debug>", "<Timear>", NPC_ID)
+	end
+--@end-do-not-package@
 	if not (NPC_ID and ns.npcID[NPC_ID] and GossipFrame.gossipOptions and db.profile.replaceOptions) then
 		return
 	end
@@ -320,6 +326,11 @@ GossipFrame:HookScript("OnShow",function(self)
 		if ns.gossip2instance[NPC_ID][index] then
 			data = GetInstanceDataByID(ns.gossip2instance[NPC_ID][index] or 0);
 		end
+--@do-not-package@
+		if db.profile.debugMode and isTimear then
+			ns:print("<debug>", "<Timear>", "i:"..i, "index:"..index, "data is"..(data==nil and "" or " not").." empty")
+		end
+--@end-do-not-package@
 		if data then
 			option.nameOrig = option.name;
 			option.instanceID = ns.gossip2instance[NPC_ID][index];
@@ -507,6 +518,9 @@ local dbDefaults,options = {
 		queueStatusFrameETT = true,
 		darkBackground = false,
 		replaceOptions = true,
+--@do-not-package@
+		debugMode = false,
+--@end-do-not-package@
 	}
 };
 
@@ -524,6 +538,12 @@ local function RegisterOptions()
 				type = "toggle", order = 2,
 				name = L["MinimapIcon"], desc = L["MinimapIconDesc"]
 			},
+--@do-not-package@
+			debugMode = {
+				type = "toggle", order = 3,
+				name = "Debug mode"
+			},
+--@end-do-not-package@
 			npcOptions = {
 				type = "group", order = 3, inline = true,
 				name = L["LFR NPCs"],
