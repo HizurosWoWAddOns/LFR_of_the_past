@@ -302,7 +302,7 @@ end);
 GossipFrame:HookScript("OnShow",function(self)
 	UpdateNpcID();
 --@do-not-package@
-	local isTimear = tostring(UnitName("MOUSEOVER")):match("Timear")~=nil
+	local list,isTimear = {},tostring(UnitName("MOUSEOVER")):match("Timear")~=nil
 	if db.profile.debugMode and isTimear then
 		ns:print("<debug>", "<Timear>", NPC_ID)
 	end
@@ -327,9 +327,7 @@ GossipFrame:HookScript("OnShow",function(self)
 			data = GetInstanceDataByID(ns.gossip2instance[NPC_ID][index] or 0);
 		end
 --@do-not-package@
-		if db.profile.debugMode and isTimear then
-			ns:print("<debug>", "<Timear>", "i:"..i, "index:"..index, "data is"..(data==nil and "" or " not").." empty")
-		end
+		tinsert(list,i..":"..index..":"..(data~=nil and 1 or 0))
 --@end-do-not-package@
 		if data then
 			option.nameOrig = option.name;
@@ -359,6 +357,9 @@ GossipFrame:HookScript("OnShow",function(self)
 			end
 		end
 	end
+--@do-not-package@
+	ns:print("<debug>", "<Timear:Options>", unpack(list))
+--@end-do-not-package@
 end);
 
 GossipFrame:HookScript("OnHide",function()
@@ -372,6 +373,12 @@ local function OnImmersionShow()
 	wipe(buttons);
 	wipe(iconTexCoords);
 	UpdateNpcID();
+--@do-not-package@
+	local list,isTimear = {},tostring(UnitName("MOUSEOVER")):match("Timear")~=nil
+	if db.profile.debugMode and isTimear then
+		ns:print("<debug>", "<Timear>", NPC_ID)
+	end
+--@end-do-not-package@
 	if not (NPC_ID and ns.npcID[NPC_ID] and not IsControlKeyDown() and db.profile.replaceOptions) then
 		return;
 	end
@@ -391,6 +398,9 @@ local function OnImmersionShow()
 			end
 			if instanceID then
 				local data = GetInstanceDataByID(instanceID)
+--@do-not-package@
+				tinsert(list,buttonID..":"..gossipOptionID..":"..(data~=nil and 1 or 0))
+--@end-do-not-package@
 				button.data = data;
 				local noSubtitle = (type(ns.noSubtitle[NPC_ID])=="table" and ns.noSubtitle[NPC_ID][instanceID]==true) or ns.noSubtitle[NPC_ID]==true;
 				-- gossip text replacement
@@ -426,6 +436,9 @@ local function OnImmersionShow()
 			end
 		end
 	end
+--@do-not-package@
+	ns:print("<debug>", "<Timear:Options>", unpack(list))
+--@end-do-not-package@
 end
 
 local function ImmersionFrame_GossipShow()
