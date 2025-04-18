@@ -4,6 +4,36 @@ local L=ns.L;
 ns.npcID = {};
 ns.npcs = {};
 
+local function UpdateNpcData(entry)
+	if not entry then
+		for i=1, #ns.npcs do
+			UpdateNpcData(ns.npcs[i])
+		end
+		return
+	end
+	local strs = ns.scanTT:GetStringRegions("SetHyperlink","unit:Creature-0-0-0-0-"..entry[1].."-0");
+	ns.npcID[entry[1]]=1;
+	if strs[1] and strs[1]~="" then
+		L["NPC"..entry[1]] = strs[1];
+	end
+
+	local mapInfo = C_Map.GetMapInfo(entry[2]);
+	if mapInfo then
+		if mapInfo.name == DUNGEON_FLOOR_DALARANCITY1 then
+			local spell = C_Spell.GetSpellInfo(224869);
+			local _,target = strsplit(HEADER_COLON,spell.name,2);
+			if target then
+				mapInfo.name = target:trim(); -- replace "Dalaran" by "Dalaran - Broken Isles"
+			end
+		end
+		entry.zoneName = mapInfo.name;
+	end
+
+	if type(entry.alt)=="table" then
+		UpdateNpcData(entry.alt)
+	end
+end
+
 function ns.load_data()
 	local Alliance = UnitFactionGroup("player")=="Alliance";
 	local npc_wod = {94870,582,33.2,37.2,5,"LFR",imgs={"wod1_%s","wod2_%s","wod3_%s"}};
@@ -27,7 +57,7 @@ function ns.load_data()
 		-- WoD, lfr (same npc id and different location for alliance and horde)
 		npc_wod,
 		-- legion
-		{111246,627,63.6,55.6,6,"LFR",imgs={"legion1","legion2","legion3"}},
+		{111246,627,63.6,55.6,6,"LFR",imgs={"legion1","legion2","legion3"},alt=L["TimearAlternative"]},
 		-- bfa
 		npc_bfa,
 		-- shadowlands
@@ -90,6 +120,7 @@ function ns.load_data()
 		[94870] = 1, -- lfr, working
 		-- legion
 		[111246] = 1, -- lfr, working
+		[31439] = 1,
 		-- bfa
 		[177193] = false,
 		-- sl
@@ -175,6 +206,10 @@ function ns.load_data()
 			110030,110029,110028,110027, -- Sepulcher of the First Ones 9.2.0
 		},
 	}
+
+	ns.gossip2instance[31439] = ns.gossip2instance[111246];
+	ns.idx2gossipOptionID[31439] = ns.idx2gossipOptionID[111246];
+
 	if not Alliance then
 		ns.idx2gossipOptionID[78709][11]=42521
 		-- dazar'alor (horde)
@@ -193,23 +228,5 @@ function ns.load_data()
 	}
 	wipe(ns.npcID);
 
-	for i=1, #ns.npcs do
-		local strs = ns.scanTT:GetStringRegions("SetHyperlink","unit:Creature-0-0-0-0-"..ns.npcs[i][1].."-0");
-		ns.npcID[ns.npcs[i][1]]=1;
-		if strs[1] and strs[1]~="" then
-			L["NPC"..ns.npcs[i][1]] = strs[1];
-		end
-
-		local mapInfo = C_Map.GetMapInfo(ns.npcs[i][2]);
-		if mapInfo then
-			if mapInfo.name == DUNGEON_FLOOR_DALARANCITY1 then
-				local spell = C_Spell.GetSpellInfo(224869);
-				local _,target = strsplit(HEADER_COLON,spell.name,2);
-				if target then
-					mapInfo.name = target:trim(); -- replace "Dalaran" by "Dalaran - Broken Isles"
-				end
-			end
-			ns.npcs[i].zoneName = mapInfo.name;
-		end
-	end
+	UpdateNpcData()
 end

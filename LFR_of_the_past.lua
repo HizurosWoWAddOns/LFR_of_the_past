@@ -627,13 +627,17 @@ local function createDescription(npc)
 	if npc[3] then
 		coords = C("dkyellow",L["Coordinates"]..CHAT_HEADER_SUFFIX) .. npc[3].." "..npc[4]
 	end
+	local lines = {
+		C("dkyellow",NAME..CHAT_HEADER_SUFFIX) .. (npc[1]==0 and L["Currently unknown"] or L["NPC"..npc[1]]),
+		C("dkyellow",ZONE..CHAT_HEADER_SUFFIX) .. (npc[3]==false and L["Somewhere in"].." "..npc.zoneName.."?" or npc.zoneName),
+		coords,
+	};
+	if type(npc.alt)=="string" then
+		tinsert(lines,C("ltgreen",L["TimearAlternative"]))
+	end
 	return {
 		type = "description", order = 1, fontSize = "medium", width="double",
-		name = table.concat({
-			C("dkyellow",NAME..CHAT_HEADER_SUFFIX) .. (npc[1]==0 and L["Currently unknown"] or L["NPC"..npc[1]]),
-			C("dkyellow",ZONE..CHAT_HEADER_SUFFIX) .. (npc[3]==false and L["Somewhere in"].." "..npc.zoneName.."?" or npc.zoneName),
-			coords,
-		},"|n")
+		name = table.concat(lines,"|n")
 	}
 end
 
@@ -813,6 +817,9 @@ local function RegisterDataBroker()
 					if npc[3] then
 						tt:AddLine(L["NPC"..npc[1]]..C("mage"," (".. _G["EXPANSION_NAME"..npc[5]]..")"),.3,1,.3);
 						tt:AddLine(npc.zoneName..", "..npc[3]..", "..npc[4],.7,.7,.7);
+						if type(npc.alt)=="string" then
+							tt:AddLine(npc.alt,.7,.9,.9,true)
+						end
 					else
 						tt:AddLine(L["Currently unknown"]..C("mage"," (".. _G["EXPANSION_NAME"..npc[5]]..")"),.3,1,.3);
 						tt:AddLine(L["Somewhere in"].." "..npc.zoneName.."?",.7,.7,.7)
