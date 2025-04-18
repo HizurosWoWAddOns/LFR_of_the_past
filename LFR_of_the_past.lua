@@ -276,8 +276,18 @@ local function buttonHook_OnEnter(self)
 			if not isKilled and killedEncounter[n] and killedEncounter[n][boss] then
 				isKilled = true;
 			end
-			GameTooltip:AddDoubleLine(C("ltblue",boss),isKilled and C("red",BOSS_DEAD) or C("green",BOSS_ALIVE));
+			local info = C("ltgray"," (insId: ".. data.instanceID .." / lfrBoss: "..i.." / raidBoss: "..bosses[i]..")");
+			if boss then
+				GameTooltip:AddDoubleLine(C("ltblue",boss)..(IsShiftKeyDown() and info or ""),isKilled and C("red",BOSS_DEAD) or C("green",BOSS_ALIVE));
+			else
+				GameTooltip:AddDoubleLine(C("ltred",_G["ERR_INTERNAL_ERROR"]),info);
+			end
 		end
+	end
+
+	if IsShiftKeyDown() then
+		GameTooltip:AddLine(" ")
+		GameTooltip:AddDoubleLine(C("ltgray","DebugMode"),C("ltgray","@project-version@ / "..GetLocale()))
 	end
 
 	GameTooltip:Show();
@@ -477,25 +487,22 @@ local function CreateEncounterTooltip(parent, append)
 				GameTooltip:AddLine(" ");
 				GameTooltip:AddLine(C("ltblue",data[i][2]));
 
-				local encounter = GetEncounterStatus(data[i][1]);
-				local i2b = ns.instance2bosses[data[i][1]];
-				--local more = IsControlKeyDown();
-				local encList = i2b or encounter
-				for e=1, #encList do
-					local enc = GetEncounterInfo(data[i][1],encList,encList[b])
-				end
-				if i2b then -- lfr
-					for b=1, #i2b do
-						local enc = GetEncounterInfo(data[i][1],encounter,i2b[b])
-						GameTooltip:AddDoubleLine("|Tinterface/questtypeicons:14:14:0:0:128:64:0:18:36:54|t "..enc[1],enc[2] and C("red",BOSS_DEAD) or C("green",BOSS_ALIVE));
+				local encounterStatus = GetEncounterStatus(data[i][1]); -- normal raid encounter list
+				local instanceBosses = ns.instance2bosses[data[i][1]]; -- lfr encounter list
+				if instanceBosses then -- lfr
+					for b=1, #instanceBosses do
+						local enc = GetEncounterInfo(data[i][1],encounterStatus,instanceBosses[b]) or {}
+						if enc then
+							GameTooltip:AddDoubleLine("|Tinterface/questtypeicons:14:14:0:0:128:64:0:18:36:54|t "..enc[1],enc[2] and C("red",BOSS_DEAD) or C("green",BOSS_ALIVE));
+						end
 					end
 				else -- normal raid
-					for b=1, #encounter do
-						local enc = GetEncounterInfo(data[i][1],encounter,b)
+					for b=1, #encounterStatus do
+						local enc = GetEncounterInfo(data[i][1],encounterStatus,b)
+						if enc then
+							GameTooltip:AddDoubleLine("|Tinterface/questtypeicons:14:14:0:0:128:64:0:18:36:54|t "..enc[1],enc[2] and C("red",BOSS_DEAD) or C("green",BOSS_ALIVE));
+						end
 					end
-				end
-				if enc then
-					GameTooltip:AddDoubleLine("|Tinterface/questtypeicons:14:14:0:0:128:64:0:18:36:54|t "..enc[1],enc[2] and C("red",BOSS_DEAD) or C("green",BOSS_ALIVE));
 				end
 			end
 
