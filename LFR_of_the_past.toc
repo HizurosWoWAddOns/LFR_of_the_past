@@ -37,6 +37,6 @@ Localizations.lua
 data.lua
 #@do-not-package@
 localizations.workfile.lua
-.dev.lua
+dev.lua
 #@end-do-not-package@
 LFR_of_the_past.lua

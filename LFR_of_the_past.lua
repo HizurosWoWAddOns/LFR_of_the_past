@@ -12,7 +12,8 @@ local LDBIcon = LibStub("LibDBIcon-1.0", true);
 local buttons,hookedButton,NPC_ID,db = {},{};
 local iconTexCoords,killedEncounter,BossKillQueryUpdate,UpdateInstanceInfoLock = {},{},false,false;
 local imgSize,imgPath = 168,"Interface\\AddOns\\LFR_of_the_past\\media\\";
-
+local ImmersionFrame = _G["ImmersionFrame"];
+local TomTom = _G["TomTom"];
 local LC = LibStub("LibColors-1.0");
 local C = LC.color;
 LC.colorset({
@@ -436,9 +437,6 @@ local function OnImmersionShow()
 			end
 		end
 	end
---@do-not-package@
-	ns:print("<debug>", "<Timear:Options>", unpack(list))
---@end-do-not-package@
 end
 
 local function ImmersionFrame_GossipShow()
@@ -621,6 +619,7 @@ local function RegisterOptions()
 	local opts = LibStub("AceConfigDialog-3.0"):AddToBlizOptions(L[addon]);
 	HST.BlizzOptions_ExpandOnShow(opts);
 	HST.AddCredit(L[addon]); -- options.args.credits.args
+	ACD:SetDefaultSize(L[addon],700,700)
 end
 
 local function createDescription(npc)
