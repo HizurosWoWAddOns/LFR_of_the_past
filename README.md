@@ -1,5 +1,5 @@
 # LFR \[of_the_past\] (WoW AddOn)
-![Build](https://github.com/HizurosWoWAddOns/LFR_of_the_past/actions/workflows/bigwigsmods-packager.yml/badge.svg)
+![Build](https://img.shields.io/github/actions/workflow/status/HizurosWoWAddOns/LFR_of_the_past/packager.yml?style=flat-square)
 ![Tag](https://img.shields.io/github/v/tag/HizurosWoWAddOns/LFR_of_the_past?style=flat-square)
 ![Downloads](https://img.shields.io/github/downloads/HizurosWoWAddOns/LFR_of_the_past/total?style=flat-square)
 ![Downloads](https://img.shields.io/github/downloads/HizurosWoWAddOns/LFR_of_the_past/latest/total?style=flat-square)
