@@ -648,27 +648,22 @@ local function createDescription(npc)
 	}
 end
 
-local function addTomTom(opt,npc)
-	local key = "tomtom";
-	opt.args[key] = {
-		type = "execute", order = 2,
-		name = L["TomTomAdd"],
+local function addWaypointToOpt(opt,npc)
+	opt.args.TomTom = {
+		type = "execute", order = 2, width="half",
+		name = L["TomTom"],
 		func = function()
-			if not (npc and TomTom.AddWaypoint) then return end
-			TomTom:AddWaypoint(npc[2],npc[3]/100,npc[4]/100,{
-				title = L["NPC"..npc[1]],
-				from = addon,
-				persistent = nil,
-				minimap = true,
-				world = true
-			});
-			-- Thanks @ fuba82@github for reminding me. i've forgot to add this function content. :-)
+			HST.AddWaypoint(npc[2],npc[3],npc[4],L["NPC"..npc[1]],addon,true,false)
+		end,
+		hidden =function() return TomTom and TomTom.AddWaypoint end
+	}
+	opt.args.MapPin = {
+		type = "execute", order = 4, width="half",
+		name = L["MapPin"],.--desc = L["MapPinDesc"],
+		func = function()
+			HST.AddWaypoint(npc[2],npc[3],npc[4],L["NPC"..npc[1]],addon,false,false)
 		end
 	}
-	if not (TomTom and TomTom.AddWaypoint) then
-		opt.args[key].name = L["TomTomMissing"];
-		opt.args[key].disabled = true;
-	end
 end
 
 local function updateOptions()
@@ -688,7 +683,7 @@ local function updateOptions()
 					}
 				}
 				if npc[3] and npc[4] then
-					addTomTom(opt,npc);
+					addWaypointToOpt(opt,npc);
 				end
 				options.args["entry"..npc.addTo].args.location.args["npc"..npc.order] = opt;
 			else
@@ -719,7 +714,7 @@ local function updateOptions()
 					}
 				}
 				if npc[3] and npc[4] then
-					addTomTom(opt.args.location.args.npc1,npc);
+					addWaypointToOpt(opt.args.location.args.npc1,npc);
 				end
 				if npc.imgs then
 					opt.args["pics_spacer"] = {
