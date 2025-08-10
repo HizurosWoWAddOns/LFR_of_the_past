@@ -659,7 +659,7 @@ local function addWaypointToOpt(opt,npc)
 	}
 	opt.args.MapPin = {
 		type = "execute", order = 4, width="half",
-		name = L["MapPin"],.--desc = L["MapPinDesc"],
+		name = L["MapPin"], --desc = L["MapPinDesc"],
 		func = function()
 			HST.AddWaypoint(npc[2],npc[3],npc[4],L["NPC"..npc[1]],addon,false,false)
 		end
