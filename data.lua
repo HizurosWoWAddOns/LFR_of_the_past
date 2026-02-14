@@ -57,6 +57,7 @@ function ns.load_data()
 		-- WoD, lfr (same npc id and different location for alliance and horde)
 		npc_wod,
 		-- legion
+		{31439,627,63.6,55.6,6,"LFR",imgs={"legion1","legion2","legion3"}},
 		{111246,627,63.6,55.6,6,"LFR",imgs={"legion1","legion2","legion3"},alt=L["TimearAlternative"]},
 		-- bfa
 		npc_bfa,
