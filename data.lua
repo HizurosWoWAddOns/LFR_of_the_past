@@ -81,7 +81,7 @@ function ns.load_data()
 			{1494,37118,1,3,5},{1495,37119,2,4,6},{1496,37120,7,8},{1497,37121,9},
 			{1610,37122,1,2,4},{1611,37123,5,3,6},{1612,37124,7,8,9},{1613,37125,10,11}
 		},
-		{31439,125,63.6,55.6,6,"LFR",addTo=6,order=2,imgs={"legion1","legion2","legion3"},npcInfo=L["TimearWotLK"],info=L["TimearLegion"],indexOffset=1,patch="?",
+		{31439,125,63.6,55.6,6,"LFR",addTo=6,order=2,imgs={"legion1","legion2","legion3"},info=L["TimearLegion"],indexOffset=1,patch="?",
 			copyFrom = 111246
 		},
 
