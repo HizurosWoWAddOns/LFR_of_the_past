@@ -1,0 +1,3 @@
+-- The Ami Dummy - Only to prevent toc load error on enUS clients... ("localizations/localizations_[TextLocale].lua")
+-- @Blizzard: [TextLocale] is very nice, but none existing files produce errors.
+-- Normally good, but in this case i think so good... That enforce use of empty files like this.

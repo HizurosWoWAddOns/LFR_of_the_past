@@ -33,10 +33,11 @@ libs\AceConfig-3.0\AceConfig-3.0.xml
 libs\HizurosSharedTools\HizurosSharedTools.lua
 #@end-no-lib-strip@
 
-Localizations.lua
-data.lua
+localizations/localizations.lua
+localizations/localizations_[TextLocale].lua
 #@do-not-package@
-localizations.workfile.lua
-dev.lua
+localizations/localizations.workfile.lua
 #@end-do-not-package@
+
+data.lua
 LFR_of_the_past.lua
