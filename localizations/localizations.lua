@@ -9,10 +9,10 @@ end});
 
 local v = GetBuildInfo()
 local n = tonumber((v:gsub("%.","")))
-local s = "It is Patch X, and the location of the Storyteller of Y remains unknown."
+local s = "It is Patch X and the location of the Storyteller of Y remains unknown."
 local t = "He was expected with Patch Z."
-L["StillMissingNPC10"] = s:gsub("X",v):gsub("Y","Dornogal")
-L["StillMissingNPC11"] = s:gsub("X",v):gsub("Y","Silvermoon")..(n>1305 and t:gsub("Z","13.0.5") or "")
+L["StillMissingNPC10"] = s:gsub("X",v):gsub("Y","The War Within")
+L["StillMissingNPC11"] = s:gsub("X",v):gsub("Y","Midnight")..(n>1305 and t:gsub("Z","13.0.5") or "")
 
 
 -- Do you want to help localize this addon?

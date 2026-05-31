@@ -377,7 +377,11 @@ local function CreateEncounterTooltip(parent, append)
 	end
 	ScanSavedInstances()
 	local instanceName, _, difficultyID, difficultyName, _, _, _, instanceMapID, _, instanceID = GetInstanceInfo()
-	if (difficultyID==7 or difficultyID==17) and ns.instance2bosses[instanceID] then
+	local data
+	if difficultyID==7 or difficultyID==17 then
+		data = GetInstanceDataByID(instanceID)
+	end
+	if data then
 		if not append then
 			GameTooltip:SetOwner(parent,"ANCHOR_NONE");
 			local point,relPoint,y,rectLeft,rectBottom = "TOP","BOTTOM",-5,parent:GetRect();
@@ -392,7 +396,6 @@ local function CreateEncounterTooltip(parent, append)
 
 		GameTooltip:AddLine(" ");
 
-		local data = GetInstanceDataByID(instanceID)
 		GameTooltip:AddLine(C("ltblue",data.instanceInfo.name));
 		for _, encounter in ipairs(data.encounters)do
 			GameTooltip:AddDoubleLine("|Tinterface/questtypeicons:14:14:0:0:128:64:0:18:36:54|t "..encounter.name,encounter.isKilled and C("red",BOSS_DEAD) or C("green",BOSS_ALIVE));
@@ -623,10 +626,10 @@ local function updateOptions()
 				opt.args["pics_spacer"] = {
 					type="description", order = 10, name= " "
 				}
-				for I=1, #npc.imgs do
+				for I=1, npc.imgs[2] do
 					opt.args.location.args["pic"..I] = {
 						type = "description", order = 10+I, width = "normal", name = "",
-						image = imgPath..npc.imgs[I]:format(faction), imageWidth = imgSize, imageHeight = imgSize
+						image = imgPath..npc.imgs[1]:format(I,faction), imageWidth = imgSize, imageHeight = imgSize
 					}
 				end
 			end
