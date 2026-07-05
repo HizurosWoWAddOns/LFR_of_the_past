@@ -69,8 +69,8 @@ local function ScanSavedInstances()
 		if (instanceDifficulty==7 or instanceDifficulty==17) and encounterProgress>0 and instanceReset>0 then
 			local encounters,ttInfo = {}, C_TooltipInfo.GetInstanceLockEncountersComplete(index)
 			if ttInfo and ttInfo.lines then
-				for i=2, #ttInfo.lines, 2 do
-					encounters[ttInfo.lines[i]] = ttInfo.lines[i+1]==BOSS_DEAD;
+				for i=2, #ttInfo.lines do -- first line is not encounter
+					encounters[ttInfo.lines[i].leftText] = ttInfo.lines[i].rightText==BOSS_DEAD;
 				end
 				killedEncounter[instanceName.."-"..instanceDifficulty] = encounters;
 			end
