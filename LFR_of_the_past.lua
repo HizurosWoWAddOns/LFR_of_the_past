@@ -11,7 +11,7 @@ local LDBIcon = LibStub("LibDBIcon-1.0", true);
 
 local buttons,hookedButton,NPC_ID,db = {},{};
 local iconTexCoords,killedEncounter,BossKillQueryUpdate,UpdateInstanceInfoLock = {},{},false,false;
-local imgSize,imgPath = 168,"Interface\\AddOns\\LFR_of_the_past\\media\\";
+local imgSize,imgPath = 256,"Interface\\AddOns\\LFR_of_the_past\\media\\";
 local ImmersionFrame = _G["ImmersionFrame"];
 local TomTom = _G["TomTom"];
 local LC = LibStub("LibColors-1.0");
@@ -61,6 +61,10 @@ function ns.faction(isNeutral)
 		return faction=="neutral";
 	end
 	return faction;
+end
+
+local function IsNotDebugMode()
+	return not db.profile.debugMode
 end
 
 local function ScanSavedInstances()
@@ -430,9 +434,7 @@ local dbDefaults = {
 		queueStatusFrameETT = true,
 		darkBackground = false,
 		replaceOptions = true,
---@do-not-package@
 		debugMode = false,
---@end-do-not-package@
 	}
 };
 
@@ -458,61 +460,70 @@ local options = {
 	name = L[addon],
 	get = getset,
 	set = getset,
-	childGroups = "tab",
+	childGroups = "tree",
 	args = {
-		AddOnLoaded = {
-			type = "toggle", order = 1,
-			name = L["AddOnLoaded"], desc = L["AddOnLoadedDesc"].."|n|n|cff44ff44"..L["AddOnLoadedDescAlt"].."|r"
-		},
-		minimap = {
-			type = "toggle", order = 2,
-			name = L["MinimapIcon"], desc = L["MinimapIconDesc"]
-		},
---@do-not-package@
-		debugMode = {
-			type = "toggle", order = 3,
-			name = "Debug mode"
-		},
---@end-do-not-package@
-		npcOptions = {
-			type = "group", order = 3, inline = true,
-			name = L["LFR NPCs"],
-			args = {
-				replaceOptions = {
-					type = "toggle", order = 1,
-					name = L["Replace options"], desc = L["Replace text of option entries on lfr npcs"]
-				},
-				darkBackground = {
-					type = "toggle", order = 2,
-					name = L["DarkBackground"], desc = L["DarkBackgroundDesc"],
-					disabled = function()
-						return not db.profile.replaceOptions
-					end
-				},
-			},
-		},
-		encounterTooltips = {
-			type = "group", order = 4, inline = true,
-			name = L["EncounterTooltip"],
-			args = {
-				minimapButtonETT = {
-					type = "toggle", order = 3,
-					name = L["MinimapETT"], desc = L["MinimapETTDesc"],
-				},
-				queueStatusFrameETT = {
-					type = "toggle", order = 4,
-					name = L["InstanceEyeETT"], desc = L["InstanceEyeETTDesc"],
-				},
-			}
-		},
 		neutral = {
-			type = "description", order = 5, fontSize = "large",
+			type = "description", order = 1, fontSize = "large",
 			name = L["PlayerNeutral"],
 		},
 		info = {
-			type = "description", order = 6, fontSize = "medium",
+			type = "description", order = 2, fontSize = "medium",
 			name = L["InfoMsg"]
 		},
+		opts = {
+			type = "group", order=3,
+			name = OPTIONS,
+			args = {
+				AddOnLoaded = {
+					type = "toggle", order = 1,
+					name = L["AddOnLoaded"], desc = L["AddOnLoadedDesc"].."|n|n|cff44ff44"..L["AddOnLoadedDescAlt"].."|r"
+				},
+				minimap = {
+					type = "toggle", order = 2,
+					name = L["MinimapIcon"], desc = L["MinimapIconDesc"]
+				},
+				--debugMode = {
+				--	type = "toggle", order = 3,
+				--	name = "Debug mode"
+				--},
+				npcOptions = {
+					type = "group", order = 3, inline = true,
+					name = L["LFR NPCs"],
+					args = {
+						replaceOptions = {
+							type = "toggle", order = 1,
+							name = L["Replace options"], desc = L["Replace text of option entries on lfr npcs"]
+						},
+						darkBackground = {
+							type = "toggle", order = 2,
+							name = L["DarkBackground"], desc = L["DarkBackgroundDesc"],
+							disabled = function()
+								return not db.profile.replaceOptions
+							end
+						},
+					},
+				},
+				encounterTooltips = {
+					type = "group", order = 4, inline = true,
+					name = L["EncounterTooltip"],
+					args = {
+						minimapButtonETT = {
+							type = "toggle", order = 3,
+							name = L["MinimapETT"], desc = L["MinimapETTDesc"],
+						},
+						queueStatusFrameETT = {
+							type = "toggle", order = 4,
+							name = L["InstanceEyeETT"], desc = L["InstanceEyeETTDesc"],
+						},
+					}
+				},
+			}
+		},
+		spacer = {type="group",order=4,name=" ",args={},disabled=true},
+		label = {type="group",order=5,name="|cff00aaff"..DESCRIPTION.."|r",args={},disabled=true},
+		spacer2= {type="group",order=-3,name=" ",args={},disabled=true},
+		label2= {type="group",order=-2,name="|cff00aaff".."Debugging".."|r",args={},disabled=true,hidden=IsNotDebugMode},
+		debug1 = {type="group",order=-1,name="SavedInstances",args = {},hidden=IsNotDebugMode}
 		-- npcs added by function updateOptions
 	}
 };
@@ -549,7 +560,7 @@ local function createDescription(npc)
 		tinsert(lines,C("dkyellow",INFO..colon).." "..C("ltgreen",npc.info))
 	end
 	return {
-		type = "description", order = 1, fontSize = "medium", width="double",
+		type = "description", order = 1, fontSize = "medium", --width="double",
 		name = table.concat(lines,"|n")
 	}
 end
@@ -623,12 +634,9 @@ local function updateOptions()
 				addWaypointToOpt(opt.args.location.args.npc1,npc);
 			end
 			if npc.imgs then
-				opt.args["pics_spacer"] = {
-					type="description", order = 10, name= " "
-				}
 				for I=1, npc.imgs[2] do
 					opt.args.location.args["pic"..I] = {
-						type = "description", order = 10+I, width = "normal", name = "",
+						type = "description", order = 10+I, name = "",
 						image = imgPath..npc.imgs[1]:format(I,faction), imageWidth = imgSize, imageHeight = imgSize
 					}
 				end
